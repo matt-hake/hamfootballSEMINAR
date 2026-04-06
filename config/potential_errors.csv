@@ -1,0 +1,14 @@
+         Parser:
+Length or ordering changes
+Down/distance/Field position location changes
+Teams aren’t mentioned in the first 20 lines of pdf
+Groq is discontinued or rate limits change
+Token limits currently reached at around 70 runs in a day
+Drives no longer start with “drive start”
+
+        Scraper:
+URLs for NESCAC websiites change
+Another School Joins the NESCAC
+
+             UI:
+(don’t really see this breaking)

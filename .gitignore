@@ -1,0 +1,23 @@
+.DS_Store
+*.pdf
+*.xlsx
+~$*.xlsx
+hamfootballSEMINAR/
+games/
+results/.DS_Store
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Virtual environment
+.venv/
+
+# Job outputs / scraped data
+storage/
+nescac_2025_pdfs/
+nescac_2025_pdfs_2/
+hamilton_football_2025_pdfs/
+
+# OS
+#.DS_Store
+.env

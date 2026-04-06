@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+jinja2
+pydantic
+requests
+beautifulsoup4
+lxml
+pdfplumber
+flask
+pandas
+openpyxl
+streamlit
