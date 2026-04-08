@@ -15,6 +15,7 @@
 import os
 import json
 import time
+from typing import Optional
 from groq import Groq
 
 
@@ -53,6 +54,7 @@ ERROR_FEATURES = {
     "RUSHER": "ERROR",
     "RECEIVER": "ERROR",
     "DEFENDER": "ERROR",
+    "DEFENSIVE PLAY TYPE": "ERROR",
 }
 
 NONE_FEATURES = {
@@ -60,15 +62,16 @@ NONE_FEATURES = {
     "RUSHER": "NONE",
     "RECEIVER": "NONE",
     "DEFENDER": "NONE",
+    "DEFENSIVE PLAY TYPE": "NONE",
 }
 
-EXPECTED_KEYS = ["PASSER", "RUSHER", "RECEIVER", "DEFENDER"]
+EXPECTED_KEYS = ["PASSER", "RUSHER", "RECEIVER", "DEFENDER", "DEFENSIVE PLAY TYPE"]
 
 
 # NEW:
 # Force every returned object into the exact schema expected by ham_parser.
 # This prevents weird model outputs from breaking alignment or downstream code.
-def normalize_feature_dict(result: dict | None, fallback: dict | None = None) -> dict:
+def normalize_feature_dict(result: Optional[dict], fallback: Optional[dict] = None) -> dict:
     if fallback is None:
         fallback = ERROR_FEATURES
 
@@ -119,53 +122,6 @@ def repair_batch_alignment(batch_results, expected_count: int):
         )
 
     return batch_results
-
-
-# ------------------------------------------------------------
-# Single-play extraction
-# ------------------------------------------------------------
-
-def extract_play_features(play_text):
-    prompt = f"""
-Analyze the following football play and identify the players involved.
-
-Return exactly one JSON object with these fields:
-- PASSER
-- RUSHER
-- RECEIVER
-- DEFENDER
-
-Rules:
-- Output ONLY the player's name or jersey number.
-- If a role is not present, the value MUST be "NONE".
-- Do not include any extra text.
-
-PLAY:
-"{play_text}"
-"""
-
-    try:
-        response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[{"role": "user", "content": prompt}],
-            response_format={"type": "json_object"},
-            temperature=0,
-        )
-
-        raw = json.loads(response.choices[0].message.content)
-
-        # NEW:
-        # Normalize to exact expected shape even if the model gives partial output.
-        return normalize_feature_dict(raw, fallback=ERROR_FEATURES)
-
-    except Exception as e:
-        print(f"\nAPI Error on play: {play_text[:50]}... -> {e}")
-        return ERROR_FEATURES.copy()
-
-
-# ------------------------------------------------------------
-# Title-page team extraction
-# ------------------------------------------------------------
 
 def get_teams_from_title(header_text):
     prompt = f"""
@@ -240,6 +196,7 @@ For EACH play, identify:
 - RUSHER
 - RECEIVER
 - DEFENDER
+- DEFENSIVE PLAY TYPE
 
 Rules:
 - Return EXACTLY {len(chunk)} items in the "plays" array.
@@ -247,6 +204,7 @@ Rules:
 - Do not skip any plays.
 - Do not add any extra plays.
 - If a role is missing, use "NONE".
+- If there is a DEFENDER, extract the DEFENSIVE PLAY TYPE (e.g., TACKLE, SACK, INTERCEPTION, PASS BREAKUP, FORCED FUMBLE). If there is no DEFENDER, use "NONE".
 - Return ONLY valid JSON.
 
 PLAYS:
@@ -255,7 +213,7 @@ PLAYS:
 Return this exact JSON shape:
 {{
   "plays": [
-    {{"PASSER": "name", "RUSHER": "name", "RECEIVER": "name", "DEFENDER": "name"}}
+    {{"PASSER": "name", "RUSHER": "name", "RECEIVER": "name", "DEFENDER": "name", "DEFENSIVE PLAY TYPE": "type"}}
   ]
 }}
 """

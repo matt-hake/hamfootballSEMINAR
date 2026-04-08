@@ -4,7 +4,7 @@
 import pdfplumber
 import pandas as pd
 import re
-from llm_engine import extract_play_features, get_teams_from_title, precompute_all_features
+from llm_engine import get_teams_from_title, precompute_all_features
 from pathlib import Path
 
 # Issues
@@ -113,7 +113,7 @@ def update_odk(current_words, line, odk_team, odk):
         else:
             odk = "DEF"
         go_next_line = True
-    elif "kick" in line:
+    elif "kick" in line or "field goal" in line:
         odk = "FG"
         if "kickoff" in line:
             odk = "KO"
@@ -313,6 +313,7 @@ def parser(pdf_path, excel_output):
             "RUSHER": "",
             "RECEIVER": "",
             "DEFENDER": "",
+            "DEFENSIVE PLAY TYPE": "",
             "Raw Text": line
         })
 
@@ -438,6 +439,7 @@ def build_dataframe_from_pdf(pdf_path):
             "RUSHER": "",
             "RECEIVER": "",
             "DEFENDER": "",
+            "DEFENSIVE PLAY TYPE": "",
             "Raw Text": line,
         })
 
@@ -461,6 +463,7 @@ def build_dataframe_from_pdf(pdf_path):
             play["RUSHER"] = "NONE"
             play["RECEIVER"] = "NONE"
             play["DEFENDER"] = "NONE"
+            play["DEFENSIVE PLAY TYPE"] = "NONE"  # Added this for special teams
 
     if plays_to_process:
         print(f"Skipping special teams. Sending {len(plays_to_process)} plays to LLM...")
@@ -470,7 +473,16 @@ def build_dataframe_from_pdf(pdf_path):
             all_plays[original_index]["PASSER"] = features.get("PASSER", "NONE")
             all_plays[original_index]["RUSHER"] = features.get("RUSHER", "NONE")
             all_plays[original_index]["RECEIVER"] = features.get("RECEIVER", "NONE")
-            all_plays[original_index]["DEFENDER"] = features.get("DEFENDER", "NONE")
+            
+            # Grab the defender first
+            defender = features.get("DEFENDER", "NONE")
+            all_plays[original_index]["DEFENDER"] = defender
+            
+            # Conditional logic: Only record a defensive play type if a defender exists
+            if defender != "NONE" and defender != "":
+                all_plays[original_index]["DEFENSIVE PLAY TYPE"] = features.get("DEFENSIVE PLAY TYPE", "NONE")
+            else:
+                all_plays[original_index]["DEFENSIVE PLAY TYPE"] = "NONE"
     else:
         print("No offensive or defensive plays found.")
 

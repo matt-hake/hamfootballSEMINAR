@@ -32,6 +32,13 @@ html to set up early versions of the user interface.
 
 ---
 
+## 1. Installation and Setup (you only need to do this once!)
+        a. Paste this link in your browser -> https://code.visualstudio.com/download 
+        b. Download the download that corresponds to your operating system (Windows, Mac, Linux)
+        c. Open the application
+        d. Hit the following keys, For Mac: Cmd + Shift + `    For Windows: Ctrl + Shift + `
+        e. 
+
 ## 1. Create and Activate the Virtual Environment
 
 From the **project root directory**:
@@ -44,7 +51,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 pip install fastapi "uvicorn[standard]" jinja2 pydantic requests beautifulsoup4 lxml
 uvicorn app.api:app --reload
-flask --app app.api --debug run
+python3 -m flask --app src/app/app.api --debug run 
 pytest ../tests/test_hamscrape.py (from src)
 
 
