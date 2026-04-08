@@ -46,6 +46,7 @@ html to set up early versions of the user interface.
                 source .venv/bin/activate
                 pip install -r requirements.txt
                 pip install fastapi "uvicorn[standard]" jinja2 pydantic requests beautifulsoup4 lxml flask
+                ```
         *For this next line, paste your api key where it says your_actual_api_key_here, don't delete the quotation marks*
                 echo 'GROQ_API_KEY="your_actual_api_key_here"' > .env
 
