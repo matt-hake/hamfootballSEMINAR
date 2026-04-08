@@ -37,7 +37,14 @@ html to set up early versions of the user interface.
         b. Download the download that corresponds to your operating system (Windows, Mac, Linux)
         c. Open the application
         d. Hit the following keys, For Mac: Cmd + Shift + `    For Windows: Ctrl + Shift + `
-        e. 
+        e. In the window that opened copy and paste the following lines and hit enter after each one
+                git clone https://github.com/hamfootballSEMINAR/hamfootballSEMINAR.git
+                cd hamfootballSEMINAR
+                python3 -m venv .venv
+                source .venv/bin/activate
+                pip install -r requirements.txt
+                pip install fastapi "uvicorn[standard]" jinja2 pydantic requests beautifulsoup4 lxml flask
+                
 
 ## 1. Create and Activate the Virtual Environment
 
