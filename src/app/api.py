@@ -38,7 +38,7 @@ from werkzeug.utils import secure_filename
 # The API calls these functions to perform actual work.
 from hamscrape import YEAR, _load_school_config, discover_pdf_records
 
-from ham_parser import parse
+from ham_parser import parse, build_dataframe_from_pdf
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -276,6 +276,24 @@ def handle_known_exception(e: Exception):
             error_type=type(e).__name__,
             detail=str(e),
         )
+    
+    #new error cases
+
+    if isinstance(e, ParseFailedError):
+        return make_error_response(
+            "The PDF was downloaded, but parsing it into structured play data failed.",
+            status_code=500,
+            error_type=type(e).__name__,
+            detail=str(e),
+    )
+
+    if isinstance(e, LlmServiceError):
+        return make_error_response(
+            "The parser reached the LLM extraction step, but the LLM service failed.",
+            status_code=502,
+            error_type=type(e).__name__,
+            detail=str(e),
+    )
 
     # fallback for unexpected errors
     return make_error_response(
@@ -350,6 +368,17 @@ def build_local_pdf_name(record: dict, pdf_url: str) -> str:
 
     # random suffix prevents overwriting files with same name
     return f"{base_name}_{uuid.uuid4().hex[:8]}.pdf"
+
+# NEW: builds a clean, deterministic Excel filename so each parsed game
+# gets a readable output like "Hamilton_Williams_2025-10-19.xlsx"
+
+def build_local_excel_name(record: dict) -> str:
+    school = secure_filename(str(record.get("school", "school")))
+    opponent = secure_filename(str(record.get("opponent", "opponent")))
+    date_str = secure_filename(str(record.get("date", "unknown-date")))
+
+    base_name = f"{school}_{opponent}_{date_str}"
+    return f"{base_name}.xlsx"
 
 
 #new:
@@ -609,6 +638,90 @@ def download_generated_file(filename: str):
         path=filename,
         as_attachment=True,
         mimetype="application/pdf",
+    )
+
+
+#new 4/7
+
+# NEW: This is the core pipeline endpoint:
+# scraper → download PDF → parse → generate Excel → return preview + links
+#
+# This replaces the old "download-only" workflow with full processing.
+
+@app.post("/api/parse-pdf")
+def api_parse_pdf():
+    """
+    Download a selected PDF, parse it into play data,
+    save an Excel output, and return preview data for the UI.
+    """
+    payload = request.get_json(silent=True) or {}
+    record = payload.get("record")
+
+    if not isinstance(record, dict):
+        return make_error_response(
+            "'record' must be an object.",
+            status_code=400,
+            error_type="ValidationError",
+        )
+
+    pdf_url = record.get("pdf_url")
+    if not pdf_url or not isinstance(pdf_url, str):
+        return make_error_response(
+            "Selected record is missing a valid 'pdf_url'.",
+            status_code=400,
+            error_type="ValidationError",
+        )
+
+    try:
+        # Step 1: download source PDF locally
+        local_pdf_path = download_pdf_to_temp(pdf_url, record)
+
+        # Step 2: build in-memory dataframe for UI preview
+        df = build_dataframe_from_pdf(local_pdf_path)
+
+        if df.empty:
+            return make_error_response(
+                "The parser ran, but no plays were extracted from the PDF.",
+                status_code=422,
+                error_type="ParseFailedError",
+            )
+
+        # Step 3: write final Excel file
+        excel_name = build_local_excel_name(record)
+        excel_path = EXPORTS_DIR / excel_name
+        final_excel_path = parse(local_pdf_path, excel_path)
+
+        # Step 4: prepare preview rows for frontend table
+        preview_df = df.head(200).fillna("")
+        rows = preview_df.to_dict(orient="records")
+        columns = list(preview_df.columns)
+
+        return jsonify(
+            {
+                "ok": True,
+                "filename": final_excel_path.name,
+                "pdf_preview_url": f"/pdfs/{local_pdf_path.name}",
+                "excel_download_url": f"/exports/{final_excel_path.name}",
+                "rows": rows,
+                "columns": columns,
+                "record": record,
+            }
+        )
+
+    except Exception as e:
+        return handle_known_exception(e)
+    
+
+@app.get("/exports/<path:filename>")
+def serve_export(filename: str):
+    """
+    Serve generated Excel files from the exports directory.
+    """
+    return send_from_directory(
+        directory=str(EXPORTS_DIR),
+        path=filename,
+        as_attachment=True,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
 
