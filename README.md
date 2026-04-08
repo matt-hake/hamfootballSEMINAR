@@ -32,19 +32,38 @@ html to set up early versions of the user interface.
 
 ---
 
-## 1. Installation and Setup (you only need to do this once!)
-        a. Paste this link in your browser -> https://code.visualstudio.com/download 
-        b. Download the download that corresponds to your operating system (Windows, Mac, Linux)
+## 1. Installation and Setup (you only need to do this the first time!)
+        a. VSCode: Paste this link in your browser -> https://code.visualstudio.com/download 
+        b. Python: 
+        b. Click the download that corresponds to your operating system (Windows, Mac, Linux)
         c. Open the application
-        d. Hit the following keys, For Mac: Cmd + Shift + `    For Windows: Ctrl + Shift + `
-        e. In the window that opened copy and paste the following lines and hit enter after each one
+        d. Hit the following keys, For Mac: Cmd + Shift + \`    For Windows: Ctrl + Shift + \`
+        e. In the window that just opened copy and paste the following lines and hit enter after each one
+                ```bash
                 git clone https://github.com/hamfootballSEMINAR/hamfootballSEMINAR.git
                 cd hamfootballSEMINAR
                 python3 -m venv .venv
                 source .venv/bin/activate
                 pip install -r requirements.txt
                 pip install fastapi "uvicorn[standard]" jinja2 pydantic requests beautifulsoup4 lxml flask
-                
+        *For this next line, paste your api key where it says your_actual_api_key_here, don't delete the quotation marks*
+                echo 'GROQ_API_KEY="your_actual_api_key_here"' > .env
+
+## 2. Running the Code (do this when you want to run it in the future)
+        a. Open the Virtual Studio Code Application
+        b. Navigate to the hamfootballSEMINAR directory
+                i. Mac: Cmd + o     Windows: Ctrl + o
+                ii. Find and select the folder named hamfootballSEMINAR
+        c. In the terminal (Mac: Cmd + Shift + \` Windows: Ctrl + Shift + \`) paste the following and hit enter after each one
+                Mac: source .venv/bin/activate  Windows: source .venv\Scripts\activate  
+                python3 -m flask --app src/app/api.py --debug run
+        d. Look at the line above the yellow text, there will be a line that says something similar to  
+        "\* Running on http://127.0.0.1:5000", hover over this link and click "follow link" when it appears (or hover over it and do Mac: cmd + click   Windows: ctrl + click)
+
+## 3. Navigating the UI
+
+Once you are finished click back into the terminal and hit ctrl + c to close the vitrual environment
+
 
 ## 1. Create and Activate the Virtual Environment
 
