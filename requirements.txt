@@ -13,3 +13,4 @@ streamlit
 bs4
 requests
 groq
+xlsxwriter
