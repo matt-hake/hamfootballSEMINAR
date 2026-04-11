@@ -4,7 +4,7 @@
 
   <!-- Standard metadata -->
   <meta charset="utf-8" />
-  <title>NESCAC Parser Pipeline Demo</title> <!-- /* NEW AS OF 4/1 */ changed title to reflect parser workflow -->
+  <title>NESCAC Parser Pipeline Demo</title>
 
   <!-- Ensures proper scaling on mobile devices -->
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -17,7 +17,7 @@
 
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      max-width: 1400px; /* NEW AS OF 4/1 */ /* widened page a bit to better support side-by-side review */
+      max-width: 1400px;
       margin: 32px auto;
       padding: 0 20px;
       background: #f7f7f7;
@@ -31,7 +31,6 @@
 
     /* ------------------------------------------------------------
        Card container styling
-       Used for each major section of the UI
        ------------------------------------------------------------ */
 
     .card {
@@ -43,7 +42,6 @@
       box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     }
 
-    /* Horizontal row layout for form controls */
     .row {
       display: flex;
       gap: 20px;
@@ -52,7 +50,6 @@
       margin-bottom: 20px;
     }
 
-    /* Grid layout for the list of school checkboxes */
     .schools-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -61,7 +58,6 @@
       margin-bottom: 20px;
     }
 
-    /* Styling for each checkbox container */
     label.checkbox {
       display: flex;
       align-items: center;
@@ -72,7 +68,6 @@
       padding: 10px 12px;
     }
 
-    /* Primary button styling */
     button {
       background: #222;
       color: white;
@@ -83,25 +78,21 @@
       cursor: pointer;
     }
 
-    /* Disabled button appearance */
     button:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
 
-    /* Subtle muted text */
     .muted {
       color: #555;
     }
 
-    /* Grid layout for the result cards */
     .result-list {
       display: grid;
       gap: 12px;
       margin-top: 16px;
     }
 
-    /* Individual result card */
     .result-item {
       border: 1px solid #ddd;
       border-radius: 12px;
@@ -113,19 +104,16 @@
       margin: 0 0 8px 0;
     }
 
-    /* Smaller metadata text */
     .small {
       font-size: 0.95rem;
       color: #555;
       word-break: break-word;
     }
 
-    /* Allows multi-line status messages */
     .status {
       white-space: pre-wrap;
     }
 
-    /* Layout for action buttons */
     .action-row {
       display: flex;
       gap: 10px;
@@ -134,7 +122,6 @@
       align-items: center;
     }
 
-    /* Button-style links */
     .link-button,
     .download-link {
       display: inline-block;
@@ -147,9 +134,8 @@
       font-weight: 600;
     }
 
-    /* Disabled link appearance */
     .link-button[aria-disabled="true"],
-    .download-link[aria-disabled="true"] { /* NEW AS OF 4/1 */ /* made disabled styling apply to both link types */
+    .download-link[aria-disabled="true"] {
       opacity: 0.5;
       pointer-events: none;
     }
@@ -158,67 +144,45 @@
       margin-top: 10px;
     }
 
-    /* Error text styling */
     .error-text {
       color: #9f1d1d;
       font-weight: 600;
     }
 
-    /* Success text styling */
     .success-text {
       color: #166534;
       font-weight: 600;
     }
 
-    /* Wrapper for embedded PDF preview */
-    .preview-wrap {
+    .review-wrap {
       margin-top: 14px;
       display: none;
     }
 
-    /* Makes preview visible when opened */
-    .preview-wrap.open {
+    .review-wrap.open {
       display: block;
     }
 
-    /* Embedded PDF viewer frame */
-    .preview-frame {
-      width: 100%;
-      height: 700px;
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      background: white;
-    }
-
-    .review-wrap { /* NEW AS OF 4/1 */ /* new container for human-in-the-loop side-by-side review */
-      margin-top: 14px;
-      display: none;
-    }
-
-    .review-wrap.open { /* NEW AS OF 4/1 */
-      display: block;
-    }
-
-    .review-grid { /* NEW AS OF 4/1 */ /* side-by-side panel layout */
+    .review-grid {
       display: grid;
       grid-template-columns: 1.1fr 1fr;
       gap: 16px;
       align-items: start;
     }
 
-    .review-panel { /* NEW AS OF 4/1 */
+    .review-panel {
       background: white;
       border: 1px solid #ddd;
       border-radius: 12px;
       padding: 12px;
     }
 
-    .review-panel h5 { /* NEW AS OF 4/1 */
+    .review-panel h5 {
       margin: 0 0 10px 0;
       font-size: 1rem;
     }
 
-    .review-frame { /* NEW AS OF 4/1 */ /* PDF frame inside review panel */
+    .review-frame {
       width: 100%;
       height: 700px;
       border: 1px solid #ddd;
@@ -226,7 +190,7 @@
       background: white;
     }
 
-    .table-wrap { /* NEW AS OF 4/1 */ /* scrollable spreadsheet preview area */
+    .table-wrap {
       max-height: 700px;
       overflow: auto;
       border: 1px solid #ddd;
@@ -234,28 +198,28 @@
       background: white;
     }
 
-    .review-table { /* NEW AS OF 4/1 */
+    .review-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.9rem;
     }
 
     .review-table th,
-    .review-table td { /* NEW AS OF 4/1 */
+    .review-table td {
       border-bottom: 1px solid #e5e5e5;
       padding: 8px 10px;
       text-align: left;
       vertical-align: top;
     }
 
-    .review-table th { /* NEW AS OF 4/1 */
+    .review-table th {
       position: sticky;
       top: 0;
       background: #f7f7f7;
       z-index: 1;
     }
 
-    .review-empty { /* NEW AS OF 4/1 */
+    .review-empty {
       padding: 12px;
       color: #555;
     }
@@ -265,24 +229,24 @@
 
 <body>
 
-  <!-- Page title -->
-  <h1>NESCAC Parser Pipeline Demo</h1> <!-- /* NEW AS OF 4/1 */ changed heading to reflect parser-based workflow -->
+  <h1>NESCAC Parser Pipeline Demo</h1>
 
-  <!-- ------------------------------------------------------------
-       Input Card
-       Allows the user to configure and run the PDF discovery job
-       ------------------------------------------------------------ -->
   <div class="card">
 
     <div class="row">
 
-      <!-- Year selection -->
+      <!-- NEW: start year replaces single year input -->
       <label>
-        Year:
-        <input id="year" type="number" value="2025" />
+        Start Year:
+        <input id="start-year" type="number" value="2021" />
       </label>
 
-      <!-- Optional link limit to prevent excessive scraping in demo -->
+      <!-- NEW: end year replaces single year input -->
+      <label>
+        End Year:
+        <input id="end-year" type="number" value="2025" />
+      </label>
+
       <label>
         Limit links (demo safety):
         <input id="limit-links" type="number" value="0" min="0" />
@@ -290,34 +254,28 @@
 
     </div>
 
+    <p class="muted">
+      Choose a year range to scrape multiple seasons at once.
+    </p>
+
     <h2>Schools</h2>
     <p class="muted">If none selected, runs all schools.</p>
 
-    <!-- Container where the API will dynamically insert school checkboxes -->
     <div id="schools-container" class="schools-grid">
       <div class="muted">Loading schools...</div>
     </div>
 
-    <!-- Button that triggers the PDF discovery API -->
-    <button id="run-btn">Find Games</button> <!-- /* NEW AS OF 4/1 */ renamed button because PDFs are no longer the final product -->
+    <button id="run-btn">Find Games</button>
 
   </div>
 
-  <!-- ------------------------------------------------------------
-       Status Card
-       Displays current system status messages
-       ------------------------------------------------------------ -->
   <div class="card">
     <h2>Status</h2>
     <div id="status" class="status">Idle.</div>
   </div>
 
-  <!-- ------------------------------------------------------------
-       Results Card
-       Displays discovered game records, each of which can be parsed
-       ------------------------------------------------------------ -->
   <div class="card">
-    <h2>Discovered Games</h2> <!-- /* NEW AS OF 4/1 */ changed results heading from PDFs to games -->
+    <h2>Discovered Games</h2>
     <div id="results" class="result-list">
       <div class="muted">No results yet.</div>
     </div>
@@ -325,43 +283,28 @@
 
   <script>
 
-    /* ------------------------------------------------------------
-       DOM references
-       These connect JavaScript to elements in the HTML page
-       ------------------------------------------------------------ */
-
     const schoolsContainer = document.getElementById("schools-container");
     const runBtn = document.getElementById("run-btn");
     const statusEl = document.getElementById("status");
     const resultsEl = document.getElementById("results");
-    const yearInput = document.getElementById("year");
+
+    /* NEW: start/end year inputs */
+    const startYearInput = document.getElementById("start-year");
+    const endYearInput = document.getElementById("end-year");
+
     const limitLinksInput = document.getElementById("limit-links");
 
-
-    /* ------------------------------------------------------------
-       Status helper
-       Updates the status text on the UI
-       ------------------------------------------------------------ */
 
     function setStatus(message) {
       statusEl.textContent = message;
     }
 
 
-    /* ------------------------------------------------------------
-       Collect selected schools from checkboxes
-       Returns array of selected school names
-       ------------------------------------------------------------ */
-
     function getSelectedSchools() {
       const checked = document.querySelectorAll('input[name="schools"]:checked');
       return Array.from(checked).map((el) => el.value);
     }
 
-
-    /* ------------------------------------------------------------
-       Escape HTML to prevent injection issues when rendering text
-       ------------------------------------------------------------ */
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -373,12 +316,7 @@
     }
 
 
-    /* ------------------------------------------------------------
-       Render school checkboxes after fetching from API
-       ------------------------------------------------------------ */
-
     function renderSchools(schools) {
-
       schoolsContainer.innerHTML = "";
 
       if (!schools || schools.length === 0) {
@@ -387,7 +325,6 @@
       }
 
       for (const school of schools) {
-
         const label = document.createElement("label");
         label.className = "checkbox";
 
@@ -407,18 +344,10 @@
     }
 
 
-    /* ------------------------------------------------------------
-       Load list of schools from the backend API
-       Endpoint: /api/schools
-       ------------------------------------------------------------ */
-
     async function loadSchools() {
       try {
-
         setStatus("Loading schools...");
 
-        /* This is where we fetch schools for use by html*/
-        
         const resp = await fetch("/api/schools");
         const data = await resp.json();
 
@@ -428,14 +357,19 @@
 
         renderSchools(data.schools);
 
-        if (data.year) {
-          yearInput.value = data.year;
+        /* NEW:
+           use backend-provided defaults for multi-year mode */
+        if (data.suggested_start_year) {
+          startYearInput.value = data.suggested_start_year;
+        }
+
+        if (data.suggested_end_year) {
+          endYearInput.value = data.suggested_end_year;
         }
 
         setStatus("Schools loaded.");
 
       } catch (err) {
-
         schoolsContainer.innerHTML =
           `<div class="muted">Failed to load schools: ${escapeHtml(err.message)}</div>`;
 
@@ -443,10 +377,6 @@
       }
     }
 
-
-    /* ------------------------------------------------------------
-       Helper to build metadata lines in result cards
-       ------------------------------------------------------------ */
 
     function buildDetailLine(label, value) {
       const div = document.createElement("div");
@@ -456,12 +386,12 @@
     }
 
 
-    function normalizeRows(data) { /* NEW AS OF 4/1 */ /* normalizes possible row payload names returned by parser endpoint */
+    function normalizeRows(data) {
       return data.rows || data.table_rows || data.preview_rows || [];
     }
 
 
-    function normalizeColumns(data, rows) { /* NEW AS OF 4/1 */ /* chooses explicit columns if provided, otherwise infers from first row */
+    function normalizeColumns(data, rows) {
       if (Array.isArray(data.columns) && data.columns.length > 0) {
         return data.columns;
       }
@@ -472,7 +402,7 @@
     }
 
 
-    function buildReviewTable(columns, rows) { /* NEW AS OF 4/1 */ /* builds HTML table for parsed spreadsheet preview */
+    function buildReviewTable(columns, rows) {
       const tableWrap = document.createElement("div");
       tableWrap.className = "table-wrap";
 
@@ -520,24 +450,15 @@
     }
 
 
-    /* ------------------------------------------------------------
-       Render discovered records returned from API
-
-       Each card now supports parsing and side-by-side review rather
-       than just preparing a PDF for display.
-       ------------------------------------------------------------ */
-
     function renderResults(records) {
-
       resultsEl.innerHTML = "";
 
       if (!records || records.length === 0) {
-        resultsEl.innerHTML = '<div class="muted">No game records found.</div>'; /* NEW AS OF 4/1 */ /* updated empty-state wording */
+        resultsEl.innerHTML = '<div class="muted">No game records found.</div>';
         return;
       }
 
       for (const record of records) {
-
         const card = document.createElement("div");
         card.className = "result-item";
 
@@ -551,20 +472,21 @@
 
         const boxscore = buildDetailLine("Boxscore", record.boxscore_url);
         const pdf = buildDetailLine("PDF", record.pdf_url);
+        const yearLine = buildDetailLine("Year", record.year);
 
         const actionRow = document.createElement("div");
         actionRow.className = "action-row";
 
-        const parseBtn = document.createElement("button"); /* NEW AS OF 4/1 */ /* replaced old prepare button with parser button */
-        parseBtn.textContent = "Parse Game"; /* NEW AS OF 4/1 */
+        const parseBtn = document.createElement("button");
+        parseBtn.textContent = "Parse Game";
 
-        const reviewBtn = document.createElement("a"); /* NEW AS OF 4/1 */ /* new review toggle control */
+        const reviewBtn = document.createElement("a");
         reviewBtn.className = "link-button";
         reviewBtn.textContent = "Open Review";
         reviewBtn.href = "#";
         reviewBtn.setAttribute("aria-disabled", "true");
 
-        const excelLink = document.createElement("a"); /* NEW AS OF 4/1 */ /* new final output link for parsed spreadsheet */
+        const excelLink = document.createElement("a");
         excelLink.className = "download-link";
         excelLink.textContent = "Download Excel";
         excelLink.href = "#";
@@ -572,59 +494,57 @@
         excelLink.rel = "noopener noreferrer";
         excelLink.setAttribute("aria-disabled", "true");
 
-        actionRow.appendChild(parseBtn); /* NEW AS OF 4/1 */
-        actionRow.appendChild(reviewBtn); /* NEW AS OF 4/1 */
-        actionRow.appendChild(excelLink); /* NEW AS OF 4/1 */
+        actionRow.appendChild(parseBtn);
+        actionRow.appendChild(reviewBtn);
+        actionRow.appendChild(excelLink);
 
         const output = document.createElement("div");
         output.className = "small output";
 
-        const reviewWrap = document.createElement("div"); /* NEW AS OF 4/1 */ /* side-by-side review container */
+        const reviewWrap = document.createElement("div");
         reviewWrap.className = "review-wrap";
 
-        const reviewGrid = document.createElement("div"); /* NEW AS OF 4/1 */
+        const reviewGrid = document.createElement("div");
         reviewGrid.className = "review-grid";
 
-        const pdfPanel = document.createElement("div"); /* NEW AS OF 4/1 */
+        const pdfPanel = document.createElement("div");
         pdfPanel.className = "review-panel";
 
-        const pdfPanelTitle = document.createElement("h5"); /* NEW AS OF 4/1 */
+        const pdfPanelTitle = document.createElement("h5");
         pdfPanelTitle.textContent = "Original PDF";
 
-        const reviewFrame = document.createElement("iframe"); /* NEW AS OF 4/1 */ /* iframe for the source PDF */
+        const reviewFrame = document.createElement("iframe");
         reviewFrame.className = "review-frame";
         reviewFrame.title = `PDF review for ${record.school} vs ${record.opponent}`;
 
         pdfPanel.appendChild(pdfPanelTitle);
         pdfPanel.appendChild(reviewFrame);
 
-        const tablePanel = document.createElement("div"); /* NEW AS OF 4/1 */
+        const tablePanel = document.createElement("div");
         tablePanel.className = "review-panel";
 
-        const tablePanelTitle = document.createElement("h5"); /* NEW AS OF 4/1 */
+        const tablePanelTitle = document.createElement("h5");
         tablePanelTitle.textContent = "Parsed Spreadsheet Preview";
 
-        const tableHost = document.createElement("div"); /* NEW AS OF 4/1 */ /* where parsed table preview gets inserted */
+        const tableHost = document.createElement("div");
         tableHost.className = "review-empty";
         tableHost.textContent = "Run the parser to load preview rows.";
 
         tablePanel.appendChild(tablePanelTitle);
         tablePanel.appendChild(tableHost);
 
-        reviewGrid.appendChild(pdfPanel); /* NEW AS OF 4/1 */
-        reviewGrid.appendChild(tablePanel); /* NEW AS OF 4/1 */
-        reviewWrap.appendChild(reviewGrid); /* NEW AS OF 4/1 */
+        reviewGrid.appendChild(pdfPanel);
+        reviewGrid.appendChild(tablePanel);
+        reviewWrap.appendChild(reviewGrid);
 
-        parseBtn.addEventListener("click", async () => { /* NEW AS OF 4/1 */ /* parser workflow replaces old /api/download-pdf workflow */
-
+        parseBtn.addEventListener("click", async () => {
           try {
-
             parseBtn.disabled = true;
 
             output.className = "small output";
-            output.textContent = "Parsing PDF and preparing review view..."; /* NEW AS OF 4/1 */
+            output.textContent = "Parsing PDF and preparing review view...";
 
-            const resp = await fetch("/api/parse-pdf", { /* NEW AS OF 4/1 */ /* changed endpoint from /api/download-pdf to parser endpoint */
+            const resp = await fetch("/api/parse-pdf", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ record })
@@ -634,49 +554,48 @@
 
             if (!resp.ok || !data.ok) {
               const detail = data.detail ? ` (${data.detail})` : "";
-              throw new Error((data.error || "Failed to parse PDF") + detail); /* NEW AS OF 4/1 */
+              throw new Error((data.error || "Failed to parse PDF") + detail);
             }
 
             const pdfPreviewUrl =
               data.pdf_preview_url ||
               data.preview_url ||
               record.pdf_url ||
-              ""; /* NEW AS OF 4/1 */ /* supports a few possible backend field names */
+              "";
 
             if (pdfPreviewUrl) {
-              reviewFrame.src = pdfPreviewUrl; /* NEW AS OF 4/1 */ /* populate left-side PDF panel */
+              reviewFrame.src = pdfPreviewUrl;
             }
 
-            if (data.excel_download_url) { /* NEW AS OF 4/1 */ /* wire final spreadsheet download */
+            if (data.excel_download_url) {
               excelLink.href = data.excel_download_url;
               excelLink.setAttribute("aria-disabled", "false");
             }
 
-            reviewBtn.setAttribute("aria-disabled", "false"); /* NEW AS OF 4/1 */
+            reviewBtn.setAttribute("aria-disabled", "false");
 
-            const rows = normalizeRows(data); /* NEW AS OF 4/1 */
-            const columns = normalizeColumns(data, rows); /* NEW AS OF 4/1 */
+            const rows = normalizeRows(data);
+            const columns = normalizeColumns(data, rows);
 
-            tableHost.innerHTML = ""; /* NEW AS OF 4/1 */
-            tableHost.className = ""; /* NEW AS OF 4/1 */
-            tableHost.appendChild(buildReviewTable(columns, rows)); /* NEW AS OF 4/1 */
+            tableHost.innerHTML = "";
+            tableHost.className = "";
+            tableHost.appendChild(buildReviewTable(columns, rows));
 
-            reviewWrap.classList.add("open"); /* NEW AS OF 4/1 */ /* open side-by-side review automatically after successful parse */
+            reviewWrap.classList.add("open");
+            reviewBtn.textContent = "Hide Review";
 
             output.className = "small output success-text";
-            output.textContent = `Parsed successfully: ${data.filename || "Excel output ready"}`; /* NEW AS OF 4/1 */
+            output.textContent = `Parsed successfully: ${data.filename || "Excel output ready"}`;
 
           } catch (err) {
-
             output.className = "small output error-text";
             output.textContent = `Error: ${err.message}`;
-
           } finally {
             parseBtn.disabled = false;
           }
         });
 
-        reviewBtn.addEventListener("click", (event) => { /* NEW AS OF 4/1 */ /* toggles review panel visibility */
+        reviewBtn.addEventListener("click", (event) => {
           event.preventDefault();
 
           if (reviewBtn.getAttribute("aria-disabled") === "true") {
@@ -692,7 +611,7 @@
           }
         });
 
-        excelLink.addEventListener("click", (event) => { /* NEW AS OF 4/1 */ /* prevent spreadsheet download before parse is complete */
+        excelLink.addEventListener("click", (event) => {
           if (excelLink.getAttribute("aria-disabled") === "true") {
             event.preventDefault();
           }
@@ -700,39 +619,41 @@
 
         card.appendChild(title);
         card.appendChild(meta);
+        card.appendChild(yearLine);
         card.appendChild(boxscore);
         card.appendChild(pdf);
         card.appendChild(actionRow);
         card.appendChild(output);
-        card.appendChild(reviewWrap); /* NEW AS OF 4/1 */ /* card now contains review UI instead of plain PDF preview */
+        card.appendChild(reviewWrap);
 
         resultsEl.appendChild(card);
       }
     }
 
 
-    /* ------------------------------------------------------------
-       Run PDF discovery
-       Calls backend API endpoint: /api/find-pdfs
-
-       This still discovers game/PDF records first, but the parser now
-       runs later per record when the user clicks Parse Game.
-       ------------------------------------------------------------ */
-
     async function runDiscovery() {
-
       try {
-
         runBtn.disabled = true;
-
         resultsEl.innerHTML = "";
 
-        setStatus("Finding games and PDF records..."); /* NEW AS OF 4/1 */ /* status text updated for new workflow */
+        setStatus("Finding games and PDF records across the selected year range...");
 
         const selectedSchools = getSelectedSchools();
 
+        const startYear = Number(startYearInput.value);
+        const endYear = Number(endYearInput.value);
+
+        if (!Number.isInteger(startYear) || !Number.isInteger(endYear)) {
+          throw new Error("Start Year and End Year must both be valid integers.");
+        }
+
+        if (startYear > endYear) {
+          throw new Error("Start Year cannot be greater than End Year.");
+        }
+
         const payload = {
-          year: Number(yearInput.value),
+          start_year: startYear,
+          end_year: endYear,
           schools: selectedSchools.length > 0 ? selectedSchools : null,
           limit_links: Number(limitLinksInput.value || 0)
         };
@@ -752,23 +673,20 @@
 
         renderResults(data.results);
 
-        setStatus(`Found ${data.count} game record(s). Click "Parse Game" to generate Excel output.`); /* NEW AS OF 4/1 */ /* user guidance now reflects parser step */
+        setStatus(
+          `Found ${data.count} game record(s) from ${startYear} through ${endYear}. Click "Parse Game" to generate Excel output.`
+        );
 
       } catch (err) {
-
         resultsEl.innerHTML = '<div class="muted">No results.</div>';
         setStatus(`Error finding PDFs: ${err.message}`);
-
       } finally {
         runBtn.disabled = false;
       }
     }
 
 
-    /* Run discovery when button clicked */
     runBtn.addEventListener("click", runDiscovery);
-
-    /* Load schools automatically when page opens */
     loadSchools();
 
   </script>

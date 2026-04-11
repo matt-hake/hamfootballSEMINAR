@@ -6,45 +6,33 @@ from __future__ import annotations
 # Standard library imports
 # ------------------------------------------------------------
 
-# used for generating random suffixes for filenames to avoid collisions
 import uuid
-
-# used for filesystem paths in a platform-independent way
 from pathlib import Path
-
-# used for extracting file names from URLs
 from urllib.parse import urlparse
-
+from datetime import datetime
 
 # ------------------------------------------------------------
 # Third-party imports
 # ------------------------------------------------------------
 
-# used for downloading PDFs from remote servers
 import requests
-
-# Flask components used to build the API server
 from flask import Flask, jsonify, render_template, request, send_from_directory
-
-# utility to ensure generated filenames are safe for the filesystem
 from werkzeug.utils import secure_filename
-
 
 # ------------------------------------------------------------
 # Internal project imports
 # ------------------------------------------------------------
 
-# Core scraper logic lives in hamscrape.py
-# The API calls these functions to perform actual work.
-from hamscrape import YEAR, _load_school_config, discover_pdf_records
+# IMPORTANT:
+# We no longer import YEAR here, because the scraper should support
+# many years, not just one hard-coded season.
+from hamscrape import DEFAULT_YEAR, _load_school_config, discover_pdf_records
 
 from ham_parser import parse, build_dataframe_from_pdf
 
 from dotenv import load_dotenv
 load_dotenv()
 
-# Import scraper-specific error types so the API can translate them
-# into clear messages for the frontend/user.
 from errors import (
     DateParseError,
     DirectPdfNotFoundError,
@@ -56,56 +44,33 @@ from errors import (
     ScheduleFetchError,
     StatsFetchError,
     ParseFailedError,
-    LlmServiceError
+    LlmServiceError,
 )
-
 
 # ------------------------------------------------------------
 # Paths
 # ------------------------------------------------------------
 
-# Determine important directories relative to this file
-
-# folder containing api.py
 APP_DIR = Path(__file__).resolve().parent
-
-# src directory (one level up)
 SRC_DIR = APP_DIR.parent
-
-# project root directory
 PROJECT_DIR = SRC_DIR.parent
-
 
 # ------------------------------------------------------------
 # Project directories used by the pipeline
 # ------------------------------------------------------------
 
-# config folder (contains schools.csv)
 CONFIG_DIR = PROJECT_DIR / "config"
-
-# main data directory
 DATA_DIR = PROJECT_DIR / "data"
-
-# temporary files (PDFs downloaded for preview)
 TEMP_DIR = DATA_DIR / "temp"
-
-# location for parsed/exported outputs
 EXPORTS_DIR = DATA_DIR / "exports"
-
 
 # ------------------------------------------------------------
 # Frontend directories
 # ------------------------------------------------------------
 
-# CSV containing editable school list
 DEFAULT_CSV_PATH = CONFIG_DIR / "schools.csv"
-
-# folder containing HTML templates
 TEMPLATES_DIR = APP_DIR / "templates"
-
-# static assets (CSS, JS, images if needed)
 STATIC_DIR = APP_DIR / "static"
-
 
 # ------------------------------------------------------------
 # Ensure required directories exist
@@ -114,35 +79,20 @@ STATIC_DIR = APP_DIR / "static"
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
 EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
-
 # ------------------------------------------------------------
 # Flask app initialization
 # ------------------------------------------------------------
 
-# Create the Flask application instance.
-# This object will handle incoming HTTP requests from the browser.
 app = Flask(
     __name__,
     template_folder=str(TEMPLATES_DIR),
     static_folder=str(STATIC_DIR),
 )
 
-
 # ------------------------------------------------------------
 # Error handling helpers
 # ------------------------------------------------------------
 
-# High level idea:
-#
-#  scraper raises an exception
-#          ↓
-#  API catches it
-#          ↓
-#  API converts it into JSON
-#          ↓
-#  frontend displays error message to the user
-
-#PACKAGES ERROR INFORMATION INTO JSON FOR FRONT-END
 def make_error_response(
     message: str,
     *,
@@ -153,14 +103,7 @@ def make_error_response(
 ):
     """
     Create a consistent JSON error payload for the frontend.
-
-    The frontend can display:
-    - message: user-facing explanation
-    - detail: more technical explanation if desired
-    - error_type: machine-readable category
-    - context: optional extra debugging or UI context
     """
-
     payload = {
         "ok": False,
         "error_type": error_type,
@@ -173,18 +116,12 @@ def make_error_response(
     if context:
         payload["context"] = context
 
-    # jsonify converts the Python dictionary to JSON
     return jsonify(payload), status_code
 
-#CRUCIAL FOR ERROR HANDLING
-#CITE: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status?utm
+
 def handle_known_exception(e: Exception):
     """
-    Translate scraper-specific exceptions into user-friendly API responses.
-
-    The scraper raises domain-specific errors (InvalidSchoolError,
-    ScheduleFetchError, etc.). The API catches them here and converts
-    them into structured JSON responses the frontend understands.
+    Translate scraper/parser-specific exceptions into user-friendly API responses.
     """
 
     if isinstance(e, InvalidSchoolError):
@@ -259,7 +196,6 @@ def handle_known_exception(e: Exception):
             detail=str(e),
         )
 
-    # network timeout handling
     if isinstance(e, requests.Timeout):
         return make_error_response(
             "The request took too long and timed out.",
@@ -268,7 +204,6 @@ def handle_known_exception(e: Exception):
             detail=str(e),
         )
 
-    # generic network error
     if isinstance(e, requests.RequestException):
         return make_error_response(
             "A network error occurred while contacting a remote site.",
@@ -276,8 +211,6 @@ def handle_known_exception(e: Exception):
             error_type=type(e).__name__,
             detail=str(e),
         )
-    
-    #new error cases
 
     if isinstance(e, ParseFailedError):
         return make_error_response(
@@ -285,7 +218,7 @@ def handle_known_exception(e: Exception):
             status_code=500,
             error_type=type(e).__name__,
             detail=str(e),
-    )
+        )
 
     if isinstance(e, LlmServiceError):
         return make_error_response(
@@ -293,9 +226,8 @@ def handle_known_exception(e: Exception):
             status_code=502,
             error_type=type(e).__name__,
             detail=str(e),
-    )
+        )
 
-    # fallback for unexpected errors
     return make_error_response(
         "An unexpected error occurred.",
         status_code=500,
@@ -303,37 +235,25 @@ def handle_known_exception(e: Exception):
         detail=str(e),
     )
 
-
 # ------------------------------------------------------------
 # Helper functions used by routes
 # ------------------------------------------------------------
 
-#gets the schools from hamscrape, alphabetizes
 def list_schools() -> list[str]:
     """
     Load school names from the CSV config file.
-
-    This allows the client to modify the list of schools simply by
-    editing config/schools.csv without touching the code.
     """
-
     schools_map, _ = _load_school_config(DEFAULT_CSV_PATH)
-
     return sorted(schools_map.keys())
 
-#extra error checking may not be necessary due to input format
+
 def normalize_limit_links(value) -> int:
     """
     Convert limit_links to a safe integer.
-
-    Used for demo safety so the UI cannot accidentally scrape
-    thousands of pages if misconfigured.
     """
-
     if value in (None, "", 0, "0"):
         return 0
 
-    #check if value is an int, accounting for exceptions
     try:
         parsed = int(value)
     except (TypeError, ValueError):
@@ -344,18 +264,70 @@ def normalize_limit_links(value) -> int:
 
     return parsed
 
-#CITE: https://tedboy.github.io/flask/generated/werkzeug.secure_filename.html
+
+def normalize_year_payload(payload: dict) -> list[int]:
+    """
+    NEW:
+    Convert frontend year input into a validated list of years.
+
+    Supported request shapes:
+    1. { "year": 2025 }
+    2. { "years": [2021, 2022, 2023, 2024, 2025] }
+    3. { "start_year": 2016, "end_year": 2025 }
+
+    Returns:
+        sorted distinct list of years
+    """
+    # Option 1: explicit list of years
+    raw_years = payload.get("years")
+    if raw_years is not None:
+        if not isinstance(raw_years, list):
+            raise ValueError("'years' must be a list of integers.")
+        if not raw_years:
+            raise ValueError("'years' cannot be empty.")
+
+        out: list[int] = []
+        for y in raw_years:
+            try:
+                out.append(int(y))
+            except (TypeError, ValueError):
+                raise ValueError("Every value in 'years' must be an integer.")
+
+        years = sorted(set(out))
+        return years
+
+    # Option 2: start/end range
+    has_start = "start_year" in payload and payload.get("start_year") not in (None, "")
+    has_end = "end_year" in payload and payload.get("end_year") not in (None, "")
+
+    if has_start or has_end:
+        if not (has_start and has_end):
+            raise ValueError("Both 'start_year' and 'end_year' must be provided together.")
+
+        try:
+            start_year = int(payload.get("start_year"))
+            end_year = int(payload.get("end_year"))
+        except (TypeError, ValueError):
+            raise ValueError("'start_year' and 'end_year' must be integers.")
+
+        if start_year > end_year:
+            raise ValueError("'start_year' cannot be greater than 'end_year'.")
+
+        return list(range(start_year, end_year + 1))
+
+    # Option 3: single year (backward compatible)
+    try:
+        single_year = int(payload.get("year", DEFAULT_YEAR))
+    except (TypeError, ValueError):
+        raise ValueError("'year' must be an integer.")
+
+    return [single_year]
+
+
 def build_local_pdf_name(record: dict, pdf_url: str) -> str:
     """
     Generate a readable local filename for a downloaded PDF.
-
-    Prefer using:
-        school_opponent_date
-
-    Example:
-        Hamilton_Williams_2025-10-19_xxxxxxxx.pdf
     """
-
     school = secure_filename(str(record.get("school", "school")))
     opponent = secure_filename(str(record.get("opponent", "opponent")))
     date_str = secure_filename(str(record.get("date", "unknown-date")))
@@ -366,11 +338,8 @@ def build_local_pdf_name(record: dict, pdf_url: str) -> str:
         parsed = urlparse(pdf_url)
         base_name = Path(parsed.path).stem or "game_pdf"
 
-    # random suffix prevents overwriting files with same name
     return f"{base_name}_{uuid.uuid4().hex[:8]}.pdf"
 
-# NEW: builds a clean, deterministic Excel filename so each parsed game
-# gets a readable output like "Hamilton_Williams_2025-10-19.xlsx"
 
 def build_local_excel_name(record: dict) -> str:
     school = secure_filename(str(record.get("school", "school")))
@@ -381,97 +350,75 @@ def build_local_excel_name(record: dict) -> str:
     return f"{base_name}.xlsx"
 
 
-#new:
-
-#record will be DownloadResult object converted to dictionary
 def download_pdf_to_temp(pdf_url: str, record: dict) -> Path:
     """
     Download a PDF from its source URL into data/temp/.
-
-    This does NOT parse the PDF. It simply stores it locally
-    so the frontend can preview or download it.
     """
-
-    #try to download the pdf
     try:
         response = requests.get(pdf_url, timeout=(15, 90))
         response.raise_for_status()
     except requests.RequestException as e:
         raise DownloadFailedError(f"Failed to download PDF from {pdf_url}: {e}") from e
 
-    #use helper to generate file name
     local_name = build_local_pdf_name(record, pdf_url)
     local_path = TEMP_DIR / local_name
-
-    #write out the content to the temporary directory so we can use it later
     local_path.write_bytes(response.content)
 
     return local_path
 
-#create a duplicate value of pdf_url so we can point to it in memory and via source
+
 def add_ui_fields_to_record(record: dict) -> dict:
     """
     Enrich a discovered record with UI-specific fields.
-
-    This makes the frontend logic simpler.
     """
-
     enriched = dict(record)
 
     pdf_url = enriched.get("pdf_url")
-
     if pdf_url:
         enriched["source_pdf_url"] = pdf_url
 
     return enriched
 
-
 # ------------------------------------------------------------
 # Routes
 # ------------------------------------------------------------
 
-# LINK 1. Loads our template when the user visits the root
 @app.get("/")
 def index():
-    """
-    Serve the main frontend page.
-
-    When the user visits the site root, Flask renders index.html.
-    """
     return render_template("index.html")
 
 
 @app.get("/api/health")
 def api_health():
-    """
-    Simple health check endpoint.
-
-    Used to confirm that the API server is running.
-    """
     return jsonify({"ok": True})
 
-#when schools is requested, get schools from hamparser (using imported
-# function) and convert to json
+
 @app.get("/api/schools")
 def api_schools():
     """
-    Return the list of available schools to the frontend.
+    Return school list plus default year info for the frontend.
 
-    Called when the UI loads so it can populate the checkbox list.
+    NEW:
+    We now expose:
+    - default_year
+    - a suggested 10-year window
     """
     try:
+        current_year = datetime.now().year
+
         return jsonify(
             {
                 "ok": True,
-                "year": YEAR,
+                "default_year": DEFAULT_YEAR,
+                "suggested_start_year": current_year - 9,
+                "suggested_end_year": current_year,
                 "schools": list_schools(),
             }
         )
     except Exception as e:
         return handle_known_exception(e)
 
-#POST request is triggered (client to server), prompting us to find all pdfs
-#pdfs are stored as 
+
 @app.post("/api/find-pdfs")
 def api_find_pdfs():
     """
@@ -479,29 +426,29 @@ def api_find_pdfs():
 
     This endpoint does NOT download PDFs.
     It only discovers metadata about available PDFs.
-    """
 
-    #payload is a python dictionary
+    NEW:
+    Supports:
+    - year
+    - years
+    - start_year + end_year
+    """
     payload = request.get_json(silent=True) or {}
 
-    #make sure year looks how it should
     try:
-        year = int(payload.get("year", YEAR))
-    except (TypeError, ValueError):
+        years = normalize_year_payload(payload)
+    except ValueError as e:
         return make_error_response(
-            "'year' must be an integer.",
+            str(e),
             status_code=400,
             error_type="ValidationError",
         )
 
-    #pull out schools
     schools = payload.get("schools")
 
-    #if no selection of schools was made, use all of them
     if schools is None:
         schools = list_schools()
 
-    #make sure we're working with a list
     if not isinstance(schools, list):
         return make_error_response(
             "'schools' must be a list or null.",
@@ -509,7 +456,6 @@ def api_find_pdfs():
             error_type="ValidationError",
         )
 
-    #get limit_links value (error checking built into function)
     try:
         limit_links = normalize_limit_links(payload.get("limit_links", 0))
     except ValueError as e:
@@ -520,39 +466,21 @@ def api_find_pdfs():
         )
 
     try:
-        # Call scraper logic from hamscrape.py
-        #CRUCIAL LINK 3
-        
-        """ User clicks "Find PDFs"
-            ↓
-        index.html JavaScript
-            ↓
-        POST /api/find-pdfs
-            ↓
-        api_find_pdfs()
-            ↓
-        discover_pdf_records()  ← hamscrape.py
-            ↓
-        scraper finds PDFs
-            ↓
-        results returned to API
-            ↓
-        API sends JSON to frontend """
-
+        # IMPORTANT CHANGE:
+        # We now pass 'years=years' instead of 'year=year'
         results = discover_pdf_records(
-            year=year,
             schools=schools,
+            years=years,
             limit_links=limit_links,
         )
 
-        #add extra fields for front end
         enriched_results = [add_ui_fields_to_record(r) for r in results]
 
-        #turn into json, return
         return jsonify(
             {
                 "ok": True,
                 "count": len(enriched_results),
+                "years": years,
                 "results": enriched_results,
             }
         )
@@ -560,14 +488,13 @@ def api_find_pdfs():
     except Exception as e:
         return handle_known_exception(e)
 
-#"function" to download pdf that index html fetches
+
 @app.post("/api/download-pdf")
 def api_download_pdf():
     """
     Download a selected PDF into the temp directory
     and return URLs the frontend can use.
     """
-
     payload = request.get_json(silent=True) or {}
     record = payload.get("record")
 
@@ -609,12 +536,7 @@ def api_download_pdf():
 def serve_pdf(filename: str):
     """
     Serve PDFs stored in the temp directory.
-
-    This route allows:
-    - browser preview
-    - direct download
     """
-
     as_attachment = request.args.get("download") == "1"
 
     return send_from_directory(
@@ -629,10 +551,7 @@ def serve_pdf(filename: str):
 def download_generated_file(filename: str):
     """
     Compatibility route for older frontend code.
-
-    Currently serves files from the same temp folder.
     """
-
     return send_from_directory(
         directory=str(TEMP_DIR),
         path=filename,
@@ -640,13 +559,6 @@ def download_generated_file(filename: str):
         mimetype="application/pdf",
     )
 
-
-#new 4/7
-
-# NEW: This is the core pipeline endpoint:
-# scraper → download PDF → parse → generate Excel → return preview + links
-#
-# This replaces the old "download-only" workflow with full processing.
 
 @app.post("/api/parse-pdf")
 def api_parse_pdf():
@@ -673,10 +585,8 @@ def api_parse_pdf():
         )
 
     try:
-        # Step 1: download source PDF locally
         local_pdf_path = download_pdf_to_temp(pdf_url, record)
 
-        # Step 2: build in-memory dataframe for UI preview
         df = build_dataframe_from_pdf(local_pdf_path)
 
         if df.empty:
@@ -686,12 +596,10 @@ def api_parse_pdf():
                 error_type="ParseFailedError",
             )
 
-        # Step 3: write final Excel file
         excel_name = build_local_excel_name(record)
         excel_path = EXPORTS_DIR / excel_name
         final_excel_path = parse(local_pdf_path, excel_path)
 
-        # Step 4: prepare preview rows for frontend table
         preview_df = df.head(200).fillna("")
         rows = preview_df.to_dict(orient="records")
         columns = list(preview_df.columns)
@@ -710,7 +618,7 @@ def api_parse_pdf():
 
     except Exception as e:
         return handle_known_exception(e)
-    
+
 
 @app.get("/exports/<path:filename>")
 def serve_export(filename: str):
@@ -724,11 +632,9 @@ def serve_export(filename: str):
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
-
 # ------------------------------------------------------------
 # App entry point
 # ------------------------------------------------------------
 
 if __name__ == "__main__":
-    # Start Flask development server
     app.run(debug=True, host="127.0.0.1", port=5000)
