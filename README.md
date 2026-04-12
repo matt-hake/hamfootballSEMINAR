@@ -53,7 +53,7 @@ html to set up early versions of the user interface.
 
 ## 2. Running the Code (do this when you want to run it in the future)
         a. Open the Virtual Studio Code Application
-        b. Navigate to the hamfootballSEMINAR directory
+        b. Navigate to the hamfootballSEMINAR/src directory
                 i. Mac: Cmd + o     Windows: Ctrl + o
                 ii. Find and select the folder named hamfootballSEMINAR
         c. In the terminal (Mac: Cmd + Shift + \` Windows: Ctrl + Shift + \`) paste the following and hit enter after each one
