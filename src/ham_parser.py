@@ -219,6 +219,24 @@ def update_distance(line):
             return int(words[FIELD_POSTION_LOCATION - 1][-1])
     return distance
 
+# Written by Gemini 
+def find_direction(line):
+    words = re.findall(r'\b\w+\b', line.lower())
+    
+    directions = {"left", "middle", "right"}
+    modifiers = {"short", "deep"}
+    
+    for i, word in enumerate(words):
+        if word in directions:
+            if i > 0 and words[i-1] in modifiers:
+                return f"{words[i-1]} {word}"
+            else:
+                return word
+                
+    # If the loop finishes and nothing was found, return an empty string
+    return ""
+
+"""
 # main() controls the flow of the program 
 # var pdf_path: the path the to play-by-play pdf
 # var excel_output: the path to output the excel file
@@ -280,6 +298,7 @@ def parser(pdf_path, excel_output):
         
         # Look for Run/Pass
         run_or_pass = update_run_pass(line)
+        rp_location = find_direction(line)
         
         # Get Field Position
         field_position = update_field_position(current_words, odk, odk_team)
@@ -360,7 +379,7 @@ def parser(pdf_path, excel_output):
     all_plays[-1]["SERIES END"] = "GAME"
     df = pd.DataFrame(all_plays)
     df.to_excel(excel_output, index=False)
-
+"""
 
 #new functions for integration:
 
@@ -414,6 +433,7 @@ def build_dataframe_from_pdf(pdf_path):
         series_count = update_series_count(all_plays, series_trigger, odk, series_count)
 
         run_or_pass = update_run_pass(line)
+        rp_location = find_direction(line)
         field_position = update_field_position(current_words, odk, odk_team)
         all_plays = update_gain(all_plays, field_position)
         series_end = update_series_end(all_plays, line)
@@ -435,6 +455,8 @@ def build_dataframe_from_pdf(pdf_path):
             "RUN/PASS": run_or_pass,
             "QUARTER": quarter,
             "SERIES END": series_end,
+            "R/P Location": rp_location,
+            "Close Game/Blowout": "",
             "PASSER": "",
             "RUSHER": "",
             "RECEIVER": "",

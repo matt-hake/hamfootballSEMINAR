@@ -1,5 +1,3 @@
-#CITE: CHATGPT 5.2
-
 # NESCAC Football PDF Pipeline (FastAPI Demo)
 
 This project provides a **web-based interface** for running a Python data pipeline that:
@@ -33,22 +31,25 @@ html to set up early versions of the user interface.
 ---
 
 ## 1. Installation and Setup (you only need to do this the first time!)
-        a. VSCode: Paste this link in your browser -> https://code.visualstudio.com/download 
-        b. Python: 
-        b. Click the download that corresponds to your operating system (Windows, Mac, Linux)
-        c. Open the application
-        d. Hit the following keys, For Mac: Cmd + Shift + \`    For Windows: Ctrl + Shift + \`
-        e. In the window that just opened copy and paste the following lines and hit enter after each one
-                ```bash
+        a. Visual Studio Code: Paste these links in your browser -> https://code.visualstudio.com/download 
+        b. Python: https://www.python.org/downloads/
+        c. Git: https://github.com/git-guides/install-git
+        d. Click the downloads that correspond to your operating system (Windows, Mac, Linux)
+        e. Open Visual Studio Code
+        f. Hit the following keys, For Mac: Cmd + Shift + \`    For Windows: Ctrl + Shift + \`
+        g. In the window that just opened copy and paste the following lines and hit enter after each one
+        ```
                 git clone https://github.com/hamfootballSEMINAR/hamfootballSEMINAR.git
                 cd hamfootballSEMINAR
                 python3 -m venv .venv
                 source .venv/bin/activate
                 pip install -r requirements.txt
                 pip install fastapi "uvicorn[standard]" jinja2 pydantic requests beautifulsoup4 lxml flask
-                ```
+        ```
         *For this next line, paste your api key where it says your_actual_api_key_here, don't delete the quotation marks*
+        ```
                 echo 'GROQ_API_KEY="your_actual_api_key_here"' > .env
+        ```
 
 ## 2. Running the Code (do this when you want to run it in the future)
         a. Open the Virtual Studio Code Application
@@ -56,14 +57,20 @@ html to set up early versions of the user interface.
                 i. Mac: Cmd + o     Windows: Ctrl + o
                 ii. Find and select the folder named hamfootballSEMINAR
         c. In the terminal (Mac: Cmd + Shift + \` Windows: Ctrl + Shift + \`) paste the following and hit enter after each one
-                Mac: source .venv/bin/activate  Windows: source .venv\Scripts\activate  
-                python3 -m flask --app src/app/api.py --debug run
+                Mac: ```source .venv/bin/activate```  Windows: ```source .venv\Scripts\activate```  
+                ```python3 -m flask --app src/app/api.py --debug run```
         d. Look at the line above the yellow text, there will be a line that says something similar to  
         "\* Running on http://127.0.0.1:5000", hover over this link and click "follow link" when it appears (or hover over it and do Mac: cmd + click   Windows: ctrl + click)
 
 ## 3. Navigating the UI
-
-Once you are finished click back into the terminal and hit ctrl + c to close the vitrual environment
+        a. At the top of the page, select the years you would like scrape.
+        b. Select the school(s) you are interested in
+        c. click "find games", the scraper will now find all requested games (this may take 10-20 seconds)
+        d. Under "Discovered Games", find the game(s) you are interested in and click "Parse Game" (this may take a few minutes)
+        WARNING: Do not try to parse multiple games at once!
+        e. You can then review the spreadsheet in the browser or click "Download Excel" to make edits
+        f. Notice the first column of the spreadsheet "HUMAN VERIFIED", once a row is verified, you can click on the cell in the first column and click "yes".
+        g. Once you are finished click back into the terminal and hit ctrl + c to close the vitrual environment
 
 
 ## 1. Create and Activate the Virtual Environment
