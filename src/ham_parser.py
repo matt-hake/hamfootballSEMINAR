@@ -488,6 +488,7 @@ def build_dataframe_from_pdf(pdf_path):
             "SERIES END": series_end,
             "R/P Location": rp_location,
             "Score Differential": "",
+            "Game Situation": "",
             "PASSER": "",
             "RUSHER": "",
             "RECEIVER": "",
