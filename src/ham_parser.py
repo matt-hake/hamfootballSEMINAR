@@ -236,6 +236,37 @@ def find_direction(line):
     # If the loop finishes and nothing was found, return an empty string
     return ""
 
+def find_game_situation(quarter, snap_count, all_plays, time_remaining):
+    # Sudden change - (drive starting off a turnover)
+    if all_plays[-1]["SERIES END"] == "TURNOVER":
+        return "Sudden change"
+    # P&10 - 1st play of a drive.
+    elif snap_count == 1:
+        return "P&10"
+    # 2 minute drill - (a team's last possession at the end of the first half, under 3 minutes 
+    # (continued) remaining on the clock at the start of the drive OR in 4th quarter, the team's possession when 
+    # (continued) trailing with under 4 minutes left in the half).
+    # 4 minute drill - (team possession with ball, leading with less than 6 minutes left on the clock in the 4th quarter.)
+    # Middle 8 - (last 4 minutes of a 1st half and first 4 minutes of 2nd half)
+    elif (quarter == 2 and time_remaining <= 4) or (quarter == 3 and time_remaining >= 11):
+        return "Middle 8"
+    return ""
+
+# "3rd Quarter - less than 32 points would be considered in range"
+# "4th quarter - less than 25 points would be a close game"
+def find_score_differential(quarter, first_team_points, second_team_points):
+    if quarter == 3:
+        if abs(first_team_points - second_team_points) <= 32:
+            return "in range"
+        else:
+            return "blowout"
+    elif quarter == 4:
+        if abs(first_team_points - second_team_points) <= 25:
+            return "close game"
+        else:
+            return "blowout"
+    return ""
+
 """
 # main() controls the flow of the program 
 # var pdf_path: the path the to play-by-play pdf
@@ -456,7 +487,7 @@ def build_dataframe_from_pdf(pdf_path):
             "QUARTER": quarter,
             "SERIES END": series_end,
             "R/P Location": rp_location,
-            "Close Game/Blowout": "",
+            "Score Differential": "",
             "PASSER": "",
             "RUSHER": "",
             "RECEIVER": "",
