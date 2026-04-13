@@ -36,31 +36,27 @@ html to set up early versions of the user interface.
         c. Git: https://github.com/git-guides/install-git
         d. Click the downloads that correspond to your operating system (Windows, Mac, Linux)
         e. Open Visual Studio Code
-        f. Hit the following keys, For Mac: Cmd + Shift + \`    For Windows: Ctrl + Shift + \`
+        f. Hit the following keys, For Mac: Cmd + Shift + `    For Windows: Ctrl + Shift + `
         g. In the window that just opened copy and paste the following lines and hit enter after each one
-        ```
                 git clone https://github.com/hamfootballSEMINAR/hamfootballSEMINAR.git
                 cd hamfootballSEMINAR
                 python3 -m venv .venv
                 source .venv/bin/activate
                 pip install -r requirements.txt
                 pip install fastapi "uvicorn[standard]" jinja2 pydantic requests beautifulsoup4 lxml flask
-        ```
         *For this next line, paste your api key where it says your_actual_api_key_here, don't delete the quotation marks*
-        ```
                 echo 'GROQ_API_KEY="your_actual_api_key_here"' > .env
-        ```
 
 ## 2. Running the Code (do this when you want to run it in the future)
         a. Open the Virtual Studio Code Application
         b. Navigate to the hamfootballSEMINAR/src directory
                 i. Mac: Cmd + o     Windows: Ctrl + o
                 ii. Find and select the folder named hamfootballSEMINAR
-        c. In the terminal (Mac: Cmd + Shift + \` Windows: Ctrl + Shift + \`) paste the following and hit enter after each one
-                Mac: ```source .venv/bin/activate```  Windows: ```source .venv\Scripts\activate```  
-                ```python3 -m flask --app src/app/api.py --debug run```
+        c. In the terminal (Mac: Cmd + Shift + ` Windows: Ctrl + Shift + `) paste the following and hit enter after each one
+                Mac: source .venv/bin/activate  Windows: source .venv\Scripts\activate  
+                python3 -m flask --app src/app/api.py --debug run
         d. Look at the line above the yellow text, there will be a line that says something similar to  
-        "\* Running on http://127.0.0.1:5000", hover over this link and click "follow link" when it appears (or hover over it and do Mac: cmd + click   Windows: ctrl + click)
+        "* Running on http://127.0.0.1:5000", hover over this link and click "follow link" when it appears (or hover over it and do Mac: cmd + click   Windows: ctrl + click)
 
 ## 3. Navigating the UI
         a. At the top of the page, select the years you would like scrape.

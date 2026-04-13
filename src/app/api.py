@@ -587,18 +587,22 @@ def api_parse_pdf():
     try:
         local_pdf_path = download_pdf_to_temp(pdf_url, record)
 
-        df = build_dataframe_from_pdf(local_pdf_path)
+        excel_name = build_local_excel_name(record)
+        excel_path = EXPORTS_DIR / excel_name
+        
+        # RUN THE PARSER ONCE
+        final_excel_path = parse(local_pdf_path, excel_path)
 
+        # Read the newly created Excel file back in for the frontend preview
+        import pandas as pd
+        df = pd.read_excel(final_excel_path)
+        
         if df.empty:
             return make_error_response(
                 "The parser ran, but no plays were extracted from the PDF.",
                 status_code=422,
                 error_type="ParseFailedError",
             )
-
-        excel_name = build_local_excel_name(record)
-        excel_path = EXPORTS_DIR / excel_name
-        final_excel_path = parse(local_pdf_path, excel_path)
 
         preview_df = df.head(200).fillna("")
         rows = preview_df.to_dict(orient="records")

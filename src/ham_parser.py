@@ -15,10 +15,11 @@ from pathlib import Path
 # 4. figure out how to get the same # of plays everytime
 # 5. getting the last "gain" in a play
 
-PAGE_START = 5 # indicates what page to start scraping on - 1
-DOWN_POSSIBILITIES = ['1', '2', '3', '4']
-FIELD_POSTION_LOCATION = 5 # where in the sentence the field postition can be found
+PAGE_START = 5  # indicates what page to start scraping on - 1
+DOWN_POSSIBILITIES = ["1", "2", "3", "4"]
+FIELD_POSTION_LOCATION = 5  # where in the sentence the field postition can be found
 NO_PLAY_WORDS = ["timeout", "time out", "end of game", "2:00"]
+
 
 # get_raw_lines() gets all the lines from the pdf (starting at page 6)
 def get_raw_lines(pdf_path):
@@ -27,8 +28,9 @@ def get_raw_lines(pdf_path):
         for page in pdf.pages[PAGE_START:]:
             text = page.extract_text()
             if text:
-                raw_lines.extend(text.split('\n'))
+                raw_lines.extend(text.split("\n"))
     return raw_lines
+
 
 # Written by google gemini 3/30
 # set_odk_team() looks at the literal first page in the document and asks the LLM to find the two teams
@@ -40,13 +42,13 @@ def set_odk_team(pdf_path):
             text = pdf.pages[0].extract_text()
             if text:
                 # FIX: Slices the first 20 lines properly
-                header_text = "\n".join(text.split('\n')[:20]) 
-    
+                header_text = "\n".join(text.split("\n")[:20])
+
     if header_text:
         print("Asking LLM to identify teams from the Title Page...")
         teams = get_teams_from_title(header_text)
-        odk_team = teams[0] if teams[0] else "UNKNOWN" 
-        
+        odk_team = teams[0] if teams[0] else "UNKNOWN"
+
         for team in teams:
             if team and ("HAM" in team.upper() or "HAMILTON" in team.upper()):
                 odk_team = team
@@ -56,12 +58,14 @@ def set_odk_team(pdf_path):
         print("Error: Could not read the Title Page.")
         return "Error: Could not read the Title Page."
 
+
 # quarter_update() increments the quarter if certain phrases are found in the current line.
 def quarter_update(line):
     line = line.lower()
     if "start of quarter" in line or "start of 2nd half" in line:
         return True
     return False
+
 
 # could break if kickoff not the third line
 # not_play() makes checks to see if the line is actually a play, if not go to next line.
@@ -74,6 +78,7 @@ def not_play(line, line_number):
             return True
     return False
 
+
 # check_fp_lost() checks if first column info got pushed onto the next line and puts it back in the current line.
 def check_fp_lost(current_words, raw_lines, line_number, line):
     down_overflow = False
@@ -82,7 +87,7 @@ def check_fp_lost(current_words, raw_lines, line_number, line):
         # Check if fifth word ends in a digit (0-9)
         if not fifth_word[-1].isdigit():
             if line_number + 1 < len(raw_lines):
-                next_line_words = raw_lines[line_number+1].split()
+                next_line_words = raw_lines[line_number + 1].split()
                 if next_line_words:
                     # Gets first word of next line and place at index 4
                     current_words.insert(4, next_line_words[0])
@@ -90,21 +95,23 @@ def check_fp_lost(current_words, raw_lines, line_number, line):
                     down_overflow = True
     return current_words, line, down_overflow
 
-# check_add_next_line() adds the next line to the current line if necessary. 
+
+# check_add_next_line() adds the next line to the current line if necessary.
 def check_add_next_line(raw_lines, line_number, line, down_overflow):
-    while not line.endswith('.') and line_number + 1 < len(raw_lines):
+    while not line.endswith(".") and line_number + 1 < len(raw_lines):
         line_number += 1
         next_line_raw = raw_lines[line_number].strip()
         next_line_words = next_line_raw.split()
-        
-        # If down/distance data overflowed, skip first word when adding the next line. 
+
+        # If down/distance data overflowed, skip first word when adding the next line.
         if down_overflow:
             line += " " + " ".join(next_line_words[1:])
         else:
             line += " " + next_line_raw
     return line_number, line
 
-#update_odk updates the odk variable if there is a change in possession
+
+# update_odk updates the odk variable if there is a change in possession
 def update_odk(current_words, line, odk_team, odk):
     go_next_line = False
     if "drive start" in line:
@@ -124,20 +131,22 @@ def update_odk(current_words, line, odk_team, odk):
             odk = "PR"
     return odk, go_next_line
 
+
 # blank_space_bug() breaks up the field position and the rest of the play if they get merged
 def blank_space_bug(odk, current_words):
-    if (odk == "OFF" or odk == "DEF"):
+    if odk == "OFF" or odk == "DEF":
         try:
             int(current_words[FIELD_POSTION_LOCATION - 1][-1])
         except:
             current_words.pop(4)
             match = re.search(r"(\d+)([A-Z][a-z]+)", current_words[4])
             if match:
-                split1 = current_words[FIELD_POSTION_LOCATION - 1][:match.end(1)]
-                split2 = current_words[FIELD_POSTION_LOCATION - 1][match.start(2):]
+                split1 = current_words[FIELD_POSTION_LOCATION - 1][: match.end(1)]
+                split2 = current_words[FIELD_POSTION_LOCATION - 1][match.start(2) :]
                 current_words[FIELD_POSTION_LOCATION - 1] = split1
                 current_words.insert(FIELD_POSTION_LOCATION, split2)
     return current_words
+
 
 def update_series_count(all_plays, series_trigger, odk, series_count):
     if not all_plays:
@@ -146,6 +155,7 @@ def update_series_count(all_plays, series_trigger, odk, series_count):
         return series_count + 1
     return series_count
 
+
 def update_run_pass(line):
     run_or_pass = ""
     if "rush" in line:
@@ -153,6 +163,7 @@ def update_run_pass(line):
     elif "pass" in line or "sack" in line:
         run_or_pass = "P"
     return run_or_pass
+
 
 def update_field_position(current_words, odk, odk_team):
     field_position = ""
@@ -164,12 +175,20 @@ def update_field_position(current_words, odk, odk_team):
             fp_digit_tracker = -1
 
         try:
-            field_position = int(current_words[FIELD_POSTION_LOCATION - 1][fp_digit_tracker:])
+            field_position = int(
+                current_words[FIELD_POSTION_LOCATION - 1][fp_digit_tracker:]
+            )
             if odk == "DEF":
-                if current_words[FIELD_POSTION_LOCATION - 1][:2].lower() != odk_team[:2].lower():
+                if (
+                    current_words[FIELD_POSTION_LOCATION - 1][:2].lower()
+                    != odk_team[:2].lower()
+                ):
                     field_position *= -1
             elif odk == "OFF":
-                if current_words[FIELD_POSTION_LOCATION - 1][:2].lower() == odk_team[:2].lower():
+                if (
+                    current_words[FIELD_POSTION_LOCATION - 1][:2].lower()
+                    == odk_team[:2].lower()
+                ):
                     field_position *= -1
         except:
             field_position = ""
@@ -177,6 +196,7 @@ def update_field_position(current_words, odk, odk_team):
     if field_position == -50:
         field_position = 50
     return field_position
+
 
 def update_gain(all_plays, field_position):
     if len(all_plays) >= 1:
@@ -187,7 +207,7 @@ def update_gain(all_plays, field_position):
             else:
                 converted_field_position = 100 - field_position
             if previous_position < 0:
-                previous_position *= - 1
+                previous_position *= -1
             else:
                 previous_position = 100 - previous_position
 
@@ -195,6 +215,7 @@ def update_gain(all_plays, field_position):
         except:
             all_plays[-1]["GAIN"] = ""
     return all_plays
+
 
 def update_series_end(all_plays, line):
     line = line.lower()
@@ -209,6 +230,7 @@ def update_series_end(all_plays, line):
         series_end = "HALF"
     return series_end
 
+
 def update_distance(line):
     words = line.split()
     distance = words[2] if len(words) > (FIELD_POSTION_LOCATION - 1) else ""
@@ -219,22 +241,24 @@ def update_distance(line):
             return int(words[FIELD_POSTION_LOCATION - 1][-1])
     return distance
 
-# Written by Gemini 
+
+# Written by Gemini
 def find_direction(line):
-    words = re.findall(r'\b\w+\b', line.lower())
-    
+    words = re.findall(r"\b\w+\b", line.lower())
+
     directions = {"left", "middle", "right"}
     modifiers = {"short", "deep"}
-    
+
     for i, word in enumerate(words):
         if word in directions:
-            if i > 0 and words[i-1] in modifiers:
-                return f"{words[i-1]} {word}"
+            if i > 0 and words[i - 1] in modifiers:
+                return f"{words[i - 1]} {word}"
             else:
                 return word
-                
+
     # If the loop finishes and nothing was found, return an empty string
     return ""
+
 
 def find_game_situation(quarter, snap_count, all_plays, time_remaining):
     # Sudden change - (drive starting off a turnover)
@@ -243,14 +267,17 @@ def find_game_situation(quarter, snap_count, all_plays, time_remaining):
     # P&10 - 1st play of a drive.
     elif snap_count == 1:
         return "P&10"
-    # 2 minute drill - (a team's last possession at the end of the first half, under 3 minutes 
-    # (continued) remaining on the clock at the start of the drive OR in 4th quarter, the team's possession when 
+    # 2 minute drill - (a team's last possession at the end of the first half, under 3 minutes
+    # (continued) remaining on the clock at the start of the drive OR in 4th quarter, the team's possession when
     # (continued) trailing with under 4 minutes left in the half).
     # 4 minute drill - (team possession with ball, leading with less than 6 minutes left on the clock in the 4th quarter.)
     # Middle 8 - (last 4 minutes of a 1st half and first 4 minutes of 2nd half)
-    elif (quarter == 2 and time_remaining <= 4) or (quarter == 3 and time_remaining >= 11):
+    elif (quarter == 2 and time_remaining <= 4) or (
+        quarter == 3 and time_remaining >= 11
+    ):
         return "Middle 8"
     return ""
+
 
 # "3rd Quarter - less than 32 points would be considered in range"
 # "4th quarter - less than 25 points would be a close game"
@@ -266,6 +293,7 @@ def find_score_differential(quarter, first_team_points, second_team_points):
         else:
             return "blowout"
     return ""
+
 
 """
 # main() controls the flow of the program 
@@ -412,10 +440,19 @@ def parser(pdf_path, excel_output):
     df.to_excel(excel_output, index=False)
 """
 
-#new functions for integration:
+# new functions for integration:
 
-#slightly modified parser to return path for front end (CITE: ChatGPT 5.2)
+
+# slightly modified parser to return path for front end (CITE: ChatGPT 5.2)
+# var pdf_path: the path the to play-by-play pdf
+# var excel_output: the path to output the excel file
 def build_dataframe_from_pdf(pdf_path):
+    # var all_plays: a list of dictionaries that is copied to make the excel sheet
+    # var odk: offense, defense, or special teams information
+    # var series_trigger: the first team to have possession ("OFF" or "DEF")
+    # var snap_count/series_count/play_count: snap/series/play count in current possession/series
+    # var quarter: current quarter of the game
+    # var down_overflow: true if the down information can't be found on the first line. 
     all_plays = []
     odk, series_trigger = None, None
     snap_count, series_count, play_count, quarter = 0, 0, 1, 1
@@ -442,7 +479,9 @@ def build_dataframe_from_pdf(pdf_path):
                 current_words, raw_lines, line_number, line
             )
 
-        line_number, line = check_add_next_line(raw_lines, line_number, line, down_overflow)
+        line_number, line = check_add_next_line(
+            raw_lines, line_number, line, down_overflow
+        )
 
         dummy_odk = odk
         odk, go_next_line = update_odk(current_words, line, odk_team, odk)
@@ -472,30 +511,36 @@ def build_dataframe_from_pdf(pdf_path):
         down = line[0]
         distance = update_distance(line)
 
-        all_plays.append({
-            "HUMAN VERIFIED?": "No",
-            "PLAY #": play_count,
-            "ODK": odk,
-            "SERIES": series_count if odk in ["DEF", "OFF"] else "",
-            "SNAP #": "" if snap_count == 0 else snap_count,
-            "DOWN": int(down) if odk != "KO" else "",
-            "DISTANCE": int(distance) if odk != "KO" and str(distance).isdigit() else distance,
-            "FIELD POSITION (YARDLINE)": field_position,
-            "GAIN": "",
-            "HASH": "",
-            "RUN/PASS": run_or_pass,
-            "QUARTER": quarter,
-            "SERIES END": series_end,
-            "R/P Location": rp_location,
-            "Score Differential": "",
-            "Game Situation": "",
-            "PASSER": "",
-            "RUSHER": "",
-            "RECEIVER": "",
-            "DEFENDER": "",
-            "DEFENSIVE PLAY TYPE": "",
-            "Raw Text": line,
-        })
+        all_plays.append(
+            {
+                "HUMAN VERIFIED?": "No",
+                "PLAY #": play_count,
+                "ODK": odk,
+                "SERIES": series_count if odk in ["DEF", "OFF"] else "",
+                "SNAP #": "" if snap_count == 0 else snap_count,
+                "DOWN": int(down) if odk != "KO" else "",
+                "DISTANCE": (
+                    int(distance)
+                    if odk != "KO" and str(distance).isdigit()
+                    else distance
+                ),
+                "FIELD POSITION (YARDLINE)": field_position,
+                "GAIN": "",
+                "HASH": "",
+                "RUN/PASS": run_or_pass,
+                "QUARTER": quarter,
+                "SERIES END": series_end,
+                "R/P Location": rp_location,
+                "Score Differential": "",
+                "Game Situation": "",
+                "PASSER": "",
+                "RUSHER": "",
+                "RECEIVER": "",
+                "DEFENDER": "",
+                "DEFENSIVE PLAY TYPE": "",
+                "Raw Text": line,
+            }
+        )
 
         odk = dummy_odk
         play_count += 1
@@ -520,21 +565,25 @@ def build_dataframe_from_pdf(pdf_path):
             play["DEFENSIVE PLAY TYPE"] = "NONE"  # Added this for special teams
 
     if plays_to_process:
-        print(f"Skipping special teams. Sending {len(plays_to_process)} plays to LLM...")
+        print(
+            f"Skipping special teams. Sending {len(plays_to_process)} plays to LLM..."
+        )
         llm_results = precompute_all_features(plays_to_process, chunk_size=15)
 
         for original_index, features in zip(original_indices, llm_results):
             all_plays[original_index]["PASSER"] = features.get("PASSER", "NONE")
             all_plays[original_index]["RUSHER"] = features.get("RUSHER", "NONE")
             all_plays[original_index]["RECEIVER"] = features.get("RECEIVER", "NONE")
-            
+
             # Grab the defender first
             defender = features.get("DEFENDER", "NONE")
             all_plays[original_index]["DEFENDER"] = defender
-            
+
             # Conditional logic: Only record a defensive play type if a defender exists
             if defender != "NONE" and defender != "":
-                all_plays[original_index]["DEFENSIVE PLAY TYPE"] = features.get("DEFENSIVE PLAY TYPE", "NONE")
+                all_plays[original_index]["DEFENSIVE PLAY TYPE"] = features.get(
+                    "DEFENSIVE PLAY TYPE", "NONE"
+                )
             else:
                 all_plays[original_index]["DEFENSIVE PLAY TYPE"] = "NONE"
     else:
@@ -545,7 +594,8 @@ def build_dataframe_from_pdf(pdf_path):
 
     return pd.DataFrame(all_plays)
 
-#CITE: ChatGPT 5.2
+
+# CITE: ChatGPT 5.2
 def parse(pdf_path, excel_output):
     """
     Parse one play-by-play PDF and write one Excel file.
@@ -564,15 +614,16 @@ def parse(pdf_path, excel_output):
         raise ValueError(f"No plays were parsed from PDF: {pdf_path}")
 
     # Save exactly as you normally would, just swap the engine
-    writer = pd.ExcelWriter(excel_output, engine='xlsxwriter')
-    df.to_excel(writer, index=False, sheet_name='Plays')
+    writer = pd.ExcelWriter(excel_output, engine="xlsxwriter")
+    df.to_excel(writer, index=False, sheet_name="Plays")
 
     # Grab the worksheet and apply the rule to Column A (rows 2 through 1000)
-    worksheet = writer.sheets['Plays']
-    worksheet.data_validation('A2:A1000', {'validate': 'list', 'source': ['No', 'Yes']})
+    worksheet = writer.sheets["Plays"]
+    worksheet.data_validation("A2:A1000", {"validate": "list", "source": ["No", "Yes"]})
 
     writer.close()
     return excel_output
+
 
 if __name__ == "__main__":
     parse("games/HamMid25.pdf", "parser_results/HamMid25.xlsx")
