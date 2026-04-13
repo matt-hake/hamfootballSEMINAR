@@ -2,6 +2,9 @@
 """
 Core PDF scraper for NESCAC football boxscore PDFs.
 
+CITE: CHATGPT 5.2 was used to help structure and implement several functions in this file,
+and for reformatting/commenting once functionality was complete.
+
 Responsibilities:
 - Discover stats/boxscore links from schedule pages
 - Find PDF landing pages
