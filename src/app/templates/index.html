@@ -42,6 +42,7 @@
       box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     }
 
+    /* Row layout for grouped controls near the top of the page */
     .row {
       display: flex;
       gap: 20px;
@@ -50,6 +51,7 @@
       margin-bottom: 20px;
     }
 
+    /* Responsive checkbox grid for school selection */
     .schools-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -58,6 +60,7 @@
       margin-bottom: 20px;
     }
 
+    /* Styling for each school checkbox "card" */
     label.checkbox {
       display: flex;
       align-items: center;
@@ -68,6 +71,7 @@
       padding: 10px 12px;
     }
 
+    /* Main button style */
     button {
       background: #222;
       color: white;
@@ -78,21 +82,25 @@
       cursor: pointer;
     }
 
+    /* Disabled button state */
     button:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
 
+    /* Muted helper text */
     .muted {
       color: #555;
     }
 
+    /* Vertical list of discovered game cards */
     .result-list {
       display: grid;
       gap: 12px;
       margin-top: 16px;
     }
 
+    /* Individual discovered game card */
     .result-item {
       border: 1px solid #ddd;
       border-radius: 12px;
@@ -104,16 +112,19 @@
       margin: 0 0 8px 0;
     }
 
+    /* Smaller text used for metadata and status within cards */
     .small {
       font-size: 0.95rem;
       color: #555;
       word-break: break-word;
     }
 
+    /* Preserve line breaks in status text */
     .status {
       white-space: pre-wrap;
     }
 
+    /* Container for action buttons/links inside each result card */
     .action-row {
       display: flex;
       gap: 10px;
@@ -122,6 +133,7 @@
       align-items: center;
     }
 
+    /* Shared button-like styling for anchors */
     .link-button,
     .download-link {
       display: inline-block;
@@ -134,35 +146,42 @@
       font-weight: 600;
     }
 
+    /* Visual disabled state for anchors since <a> has no native disabled attribute */
     .link-button[aria-disabled="true"],
     .download-link[aria-disabled="true"] {
       opacity: 0.5;
       pointer-events: none;
     }
 
+    /* Output/status text area under each game card */
     .output {
       margin-top: 10px;
     }
 
+    /* Error styling */
     .error-text {
       color: #9f1d1d;
       font-weight: 600;
     }
 
+    /* Success styling */
     .success-text {
       color: #166534;
       font-weight: 600;
     }
 
+    /* Review panel is hidden until parsing finishes */
     .review-wrap {
       margin-top: 14px;
       display: none;
     }
 
+    /* Once "open" class is added in JavaScript, show the review section */
     .review-wrap.open {
       display: block;
     }
 
+    /* Side-by-side layout: PDF on one side, parsed table on the other */
     .review-grid {
       display: grid;
       grid-template-columns: 1.1fr 1fr;
@@ -170,6 +189,7 @@
       align-items: start;
     }
 
+    /* Panel styling for each side of the review area */
     .review-panel {
       background: white;
       border: 1px solid #ddd;
@@ -182,6 +202,7 @@
       font-size: 1rem;
     }
 
+    /* Embedded PDF frame */
     .review-frame {
       width: 100%;
       height: 700px;
@@ -190,6 +211,7 @@
       background: white;
     }
 
+    /* Scrollable wrapper for preview table */
     .table-wrap {
       max-height: 700px;
       overflow: auto;
@@ -198,6 +220,7 @@
       background: white;
     }
 
+    /* Table used to preview parsed spreadsheet rows */
     .review-table {
       width: 100%;
       border-collapse: collapse;
@@ -212,6 +235,7 @@
       vertical-align: top;
     }
 
+    /* Sticky table header so column names remain visible while scrolling */
     .review-table th {
       position: sticky;
       top: 0;
@@ -219,6 +243,7 @@
       z-index: 1;
     }
 
+    /* Placeholder text shown when no parsed rows are available yet */
     .review-empty {
       padding: 12px;
       color: #555;
@@ -261,6 +286,7 @@
     <h2>Schools</h2>
     <p class="muted">If none selected, runs all schools.</p>
 
+    <!-- This container is populated dynamically by JavaScript after /api/schools loads -->
     <div id="schools-container" class="schools-grid">
       <div class="muted">Loading schools...</div>
     </div>
@@ -276,6 +302,8 @@
 
   <div class="card">
     <h2>Discovered Games</h2>
+
+    <!-- JavaScript replaces this once results are returned -->
     <div id="results" class="result-list">
       <div class="muted">No results yet.</div>
     </div>
@@ -283,6 +311,11 @@
 
   <script>
 
+    /* ------------------------------------------------------------
+       DOM references
+       ------------------------------------------------------------ */
+
+    /* Main containers and controls used throughout the script */
     const schoolsContainer = document.getElementById("schools-container");
     const runBtn = document.getElementById("run-btn");
     const statusEl = document.getElementById("status");
@@ -292,21 +325,38 @@
     const startYearInput = document.getElementById("start-year");
     const endYearInput = document.getElementById("end-year");
 
+    /* Optional backend safety limit for discovery */
     const limitLinksInput = document.getElementById("limit-links");
 
+    /* ------------------------------------------------------------
+       Small helpers
+       ------------------------------------------------------------ */
 
     function setStatus(message) {
+      /*
+        Update the main status panel with a user-facing message.
+        This keeps the user informed about what the UI is currently doing.
+      */
       statusEl.textContent = message;
     }
 
-
     function getSelectedSchools() {
+      /*
+        Read all checked school checkboxes and return their values
+        as a plain JavaScript array of school names.
+      */
       const checked = document.querySelectorAll('input[name="schools"]:checked');
       return Array.from(checked).map((el) => el.value);
     }
 
-
     function escapeHtml(value) {
+      /*
+        Escape user-visible text before inserting it into innerHTML.
+
+        This is important whenever a string might contain special
+        characters like < or >, because those could otherwise be
+        interpreted as HTML markup instead of plain text.
+      */
       return String(value ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
@@ -315,8 +365,15 @@
         .replaceAll("'", "&#39;");
     }
 
+    /* ------------------------------------------------------------
+       School loading / rendering
+       ------------------------------------------------------------ */
 
     function renderSchools(schools) {
+      /*
+        Fill the school checkbox grid using the list returned
+        by the backend /api/schools endpoint.
+      */
       schoolsContainer.innerHTML = "";
 
       if (!schools || schools.length === 0) {
@@ -325,6 +382,10 @@
       }
 
       for (const school of schools) {
+        /*
+          Build each checkbox row manually so the page does not rely
+          on raw HTML string concatenation for this section.
+        */
         const label = document.createElement("label");
         label.className = "checkbox";
 
@@ -343,8 +404,14 @@
       }
     }
 
-
     async function loadSchools() {
+      /*
+        Load valid school names and suggested year defaults from the backend.
+
+        The backend response also provides suggested_start_year and
+        suggested_end_year so the frontend stays aligned with the API's
+        notion of a sensible multi-year range.
+      */
       try {
         setStatus("Loading schools...");
 
@@ -370,6 +437,10 @@
         setStatus("Schools loaded.");
 
       } catch (err) {
+        /*
+          We use innerHTML here because the message includes a small
+          wrapper element. The actual error text is escaped first.
+        */
         schoolsContainer.innerHTML =
           `<div class="muted">Failed to load schools: ${escapeHtml(err.message)}</div>`;
 
@@ -377,36 +448,63 @@
       }
     }
 
+    /* ------------------------------------------------------------
+       Result formatting helpers
+       ------------------------------------------------------------ */
 
     function buildDetailLine(label, value) {
+      /*
+        Build a small metadata line like:
+        "Boxscore: https://..."
+      */
       const div = document.createElement("div");
       div.className = "small";
       div.textContent = `${label}: ${value ?? ""}`;
       return div;
     }
 
-
     function normalizeRows(data) {
+      /*
+        Accept multiple possible backend field names for preview rows.
+
+        This makes the frontend more tolerant if the backend response
+        shape changes slightly, for example:
+        - rows
+        - table_rows
+        - preview_rows
+      */
       return data.rows || data.table_rows || data.preview_rows || [];
     }
 
-
     function normalizeColumns(data, rows) {
+      /*
+        Prefer explicit column definitions from the backend.
+        If they are not present, infer columns from the first row object.
+      */
       if (Array.isArray(data.columns) && data.columns.length > 0) {
         return data.columns;
       }
+
       if (rows.length > 0 && typeof rows[0] === "object" && rows[0] !== null) {
         return Object.keys(rows[0]);
       }
+
       return [];
     }
 
-
     function buildReviewTable(columns, rows) {
+      /*
+        Build the parsed spreadsheet preview table shown on the right side
+        of the review interface.
+      */
       const tableWrap = document.createElement("div");
       tableWrap.className = "table-wrap";
 
       if (!rows || rows.length === 0) {
+        /*
+          If the parser returned no preview data, show a clear placeholder
+          instead of rendering an empty table.
+        */
         const empty = document.createElement("div");
         empty.className = "review-empty";
         empty.textContent = "No parsed rows were returned by the parser.";
@@ -436,6 +534,11 @@
 
         for (const column of columns) {
           const td = document.createElement("td");
+
+          /*
+            Optional chaining (row?.[column]) safely handles cases where
+            row is null/undefined without throwing an error.
+          */
           td.textContent = row?.[column] ?? "";
           tr.appendChild(td);
         }
@@ -449,8 +552,21 @@
       return tableWrap;
     }
 
+    /* ------------------------------------------------------------
+       Result rendering
+       ------------------------------------------------------------ */
 
     function renderResults(records) {
+      /*
+        Render one result card per discovered game/PDF record.
+
+        Each card includes:
+        - metadata
+        - Parse Game button
+        - review toggle
+        - Excel download link
+        - hidden side-by-side review area
+      */
       resultsEl.innerHTML = "";
 
       if (!records || records.length === 0) {
@@ -484,6 +600,11 @@
         reviewBtn.className = "link-button";
         reviewBtn.textContent = "Open Review";
         reviewBtn.href = "#";
+
+        /*
+          Since anchor elements do not support the disabled attribute,
+          aria-disabled gives us a semantic flag we can check in JS/CSS.
+        */
         reviewBtn.setAttribute("aria-disabled", "true");
 
         const excelLink = document.createElement("a");
@@ -492,6 +613,12 @@
         excelLink.href = "#";
         excelLink.target = "_blank";
         excelLink.rel = "noopener noreferrer";
+
+        /*
+          rel="noopener noreferrer" is a security best practice when using
+          target="_blank", because it prevents the new tab from getting a
+          direct handle back to the opener page.
+        */
         excelLink.setAttribute("aria-disabled", "true");
 
         actionRow.appendChild(parseBtn);
@@ -501,6 +628,10 @@
         const output = document.createElement("div");
         output.className = "small output";
 
+        /*
+          This wrapper stays hidden until parsing succeeds.
+          Then it becomes a side-by-side PDF/table review area.
+        */
         const reviewWrap = document.createElement("div");
         reviewWrap.className = "review-wrap";
 
@@ -538,6 +669,13 @@
         reviewWrap.appendChild(reviewGrid);
 
         parseBtn.addEventListener("click", async () => {
+          /*
+            Parse flow for one discovered game:
+            1. Disable the button
+            2. POST the record to /api/parse-pdf
+            3. Load the returned PDF preview + table preview
+            4. Enable review/download controls
+          */
           try {
             parseBtn.disabled = true;
 
@@ -547,6 +685,11 @@
             const resp = await fetch("/api/parse-pdf", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
+
+              /*
+                Send the selected backend record back to the API so the
+                backend knows exactly which discovered game to download/parse.
+              */
               body: JSON.stringify({ record })
             });
 
@@ -557,6 +700,10 @@
               throw new Error((data.error || "Failed to parse PDF") + detail);
             }
 
+            /*
+              Prefer backend-local preview URLs when available.
+              Fall back to older field names or the original PDF URL.
+            */
             const pdfPreviewUrl =
               data.pdf_preview_url ||
               data.preview_url ||
@@ -567,16 +714,25 @@
               reviewFrame.src = pdfPreviewUrl;
             }
 
+            /*
+              Once the Excel file is ready, activate the download link.
+            */
             if (data.excel_download_url) {
               excelLink.href = data.excel_download_url;
               excelLink.setAttribute("aria-disabled", "false");
             }
 
+            /*
+              Once parse succeeds, allow the user to open/close the review area.
+            */
             reviewBtn.setAttribute("aria-disabled", "false");
 
             const rows = normalizeRows(data);
             const columns = normalizeColumns(data, rows);
 
+            /*
+              Replace the placeholder text with the generated preview table.
+            */
             tableHost.innerHTML = "";
             tableHost.className = "";
             tableHost.appendChild(buildReviewTable(columns, rows));
@@ -591,11 +747,17 @@
             output.className = "small output error-text";
             output.textContent = `Error: ${err.message}`;
           } finally {
+            /*
+              Re-enable parse button whether request succeeded or failed.
+            */
             parseBtn.disabled = false;
           }
         });
 
         reviewBtn.addEventListener("click", (event) => {
+          /*
+            Toggle the side-by-side review section open/closed.
+          */
           event.preventDefault();
 
           if (reviewBtn.getAttribute("aria-disabled") === "true") {
@@ -612,6 +774,9 @@
         });
 
         excelLink.addEventListener("click", (event) => {
+          /*
+            Prevent clicking the Excel download link before it has been activated.
+          */
           if (excelLink.getAttribute("aria-disabled") === "true") {
             event.preventDefault();
           }
@@ -630,8 +795,18 @@
       }
     }
 
+    /* ------------------------------------------------------------
+       Discovery flow
+       ------------------------------------------------------------ */
 
     async function runDiscovery() {
+      /*
+        Main "Find Games" workflow:
+        1. Read user input
+        2. Validate year range
+        3. POST to /api/find-pdfs
+        4. Render discovered results
+      */
       try {
         runBtn.disabled = true;
         resultsEl.innerHTML = "";
@@ -643,6 +818,10 @@
         const startYear = Number(startYearInput.value);
         const endYear = Number(endYearInput.value);
 
+        /*
+          Number(...) converts the input text into numeric form.
+          Number.isInteger(...) ensures the result is a real integer.
+        */
         if (!Number.isInteger(startYear) || !Number.isInteger(endYear)) {
           throw new Error("Start Year and End Year must both be valid integers.");
         }
@@ -651,6 +830,10 @@
           throw new Error("Start Year cannot be greater than End Year.");
         }
 
+        /*
+          If no schools are selected, send null so the backend knows
+          to run all schools rather than an empty list.
+        */
         const payload = {
           start_year: startYear,
           end_year: endYear,
@@ -661,6 +844,11 @@
         const resp = await fetch("/api/find-pdfs", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+
+          /*
+            JSON.stringify converts the JavaScript object payload into
+            a JSON string suitable for the POST request body.
+          */
           body: JSON.stringify(payload)
         });
 
@@ -685,7 +873,14 @@
       }
     }
 
+    /* ------------------------------------------------------------
+       App startup
+       ------------------------------------------------------------ */
 
+    /*
+      Wire up the main button and immediately load school options
+      when the page first opens.
+    */
     runBtn.addEventListener("click", runDiscovery);
     loadSchools();
 
