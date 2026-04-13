@@ -1,0 +1,30 @@
+# formatted by Google Gemini
+
+parser:
+  dependencies:
+    - groq_api
+  api_risks:
+    - groq_discontinued
+    - groq_rate_limits_changed
+    - daily_token_limit_exceeded: ~70  # Max runs per day
+  structural_assumptions:
+    - "Teams are in the first 20 lines"
+    - "Drives begin with 'drive start'"
+    - "Formatting follows standard Down/Distance/Field Position order"
+  known_bugs:
+    - missing increment series after half
+    - llm array misalignment
+    - missed tackles in parentheses
+    - random llm hallucinations
+    - superfluous_rows_included: "ex: start of second quarter"
+    - kickoff distance cell not null
+
+scraper:
+  target_conference: NESCAC
+  risks:
+    - "nescac base url changes"
+    - "nescac adds new school"
+
+ui:
+  status: stable
+  risks: []
