@@ -115,7 +115,7 @@ def check_add_next_line(raw_lines, line_number, line, down_overflow):
 def update_odk(current_words, line, odk_team, odk):
     go_next_line = False
     if "drive start" in line:
-        if current_words[FIELD_POSTION_LOCATION] == odk_team:
+        if current_words[FIELD_POSTION_LOCATION][:2].lower() == odk_team[:2].lower():
             odk = "OFF"
         else:
             odk = "DEF"
@@ -558,11 +558,11 @@ def build_dataframe_from_pdf(pdf_path):
             plays_to_process.append(play["Raw Text"])
             original_indices.append(index)
         else:
-            play["PASSER"] = "NONE"
-            play["RUSHER"] = "NONE"
-            play["RECEIVER"] = "NONE"
-            play["DEFENDER"] = "NONE"
-            play["DEFENSIVE PLAY TYPE"] = "NONE"  # Added this for special teams
+            play["PASSER"] = ""
+            play["RUSHER"] = ""
+            play["RECEIVER"] = ""
+            play["DEFENDER"] = ""
+            play["DEFENSIVE PLAY TYPE"] = ""
 
     if plays_to_process:
         print(
@@ -571,21 +571,40 @@ def build_dataframe_from_pdf(pdf_path):
         llm_results = precompute_all_features(plays_to_process, chunk_size=15)
 
         for original_index, features in zip(original_indices, llm_results):
-            all_plays[original_index]["PASSER"] = features.get("PASSER", "NONE")
-            all_plays[original_index]["RUSHER"] = features.get("RUSHER", "NONE")
-            all_plays[original_index]["RECEIVER"] = features.get("RECEIVER", "NONE")
+            # Extract values and replace "NONE" with ""
+            passer = features.get("PASSER", "")
+            passer = "" if passer == "NONE" else passer
 
-            # Grab the defender first
-            defender = features.get("DEFENDER", "NONE")
+            rusher = features.get("RUSHER", "")
+            rusher = "" if rusher == "NONE" else rusher
+
+            receiver = features.get("RECEIVER", "")
+            receiver = "" if receiver == "NONE" else receiver
+
+            defender = features.get("DEFENDER", "")
+            defender = "" if defender == "NONE" else defender
+
+            def_play_type = features.get("DEFENSIVE PLAY TYPE", "")
+            def_play_type = "" if def_play_type == "NONE" else def_play_type
+
+            # LLM passer/rusher debugging
+            if passer != "" and rusher != "":
+                if receiver == "":
+                    passer = ""  # No receiver implies it was a scramble/run
+                else:
+                    rusher = ""  # Has a receiver implies it was a pass
+
+            # Apply values back to the play dictionary
+            all_plays[original_index]["PASSER"] = passer
+            all_plays[original_index]["RUSHER"] = rusher
+            all_plays[original_index]["RECEIVER"] = receiver
             all_plays[original_index]["DEFENDER"] = defender
 
             # Conditional logic: Only record a defensive play type if a defender exists
-            if defender != "NONE" and defender != "":
-                all_plays[original_index]["DEFENSIVE PLAY TYPE"] = features.get(
-                    "DEFENSIVE PLAY TYPE", "NONE"
-                )
+            if defender != "":
+                all_plays[original_index]["DEFENSIVE PLAY TYPE"] = def_play_type
             else:
-                all_plays[original_index]["DEFENSIVE PLAY TYPE"] = "NONE"
+                all_plays[original_index]["DEFENSIVE PLAY TYPE"] = ""
     else:
         print("No offensive or defensive plays found.")
 
