@@ -4,13 +4,8 @@
 # Handle all LLM-based extraction for the football PDF parser.
 #
 # Major revisions in this version:
-# 1. REMOVED hardcoded API key for security
-# 2. MADE batch response parsing stricter and safer
-# 3. REMOVED numbered play formatting that could confuse the model
-# 4. ADDED alignment repair so batches do not fail just because the LLM
-#    returned too many or too few items
-# 5. ADDED response normalization helpers so every result has the exact
-#    keys the parser expects
+# 1. Added explicit ID mapping to ensure robust alignment even if 
+#    the LLM drops or adds extra lines.
 
 import os
 import json
@@ -18,22 +13,10 @@ import time
 from typing import Optional
 from groq import Groq
 
-
 # ------------------------------------------------------------
 # API client setup
 # ------------------------------------------------------------
 
-# NEW:
-# Do NOT hardcode the API key in source code.
-# This file now relies on the environment variable GROQ_API_KEY.
-#
-# Example:
-#   export GROQ_API_KEY="your_key_here"
-# or load it through python-dotenv elsewhere in your app.
-#
-# This is much safer than:
-#   os.environ["GROQ_API_KEY"] = "..."
-#
 api_key = os.getenv("GROQ_API_KEY")
 if not api_key:
     raise RuntimeError(
@@ -42,13 +25,10 @@ if not api_key:
 
 client = Groq(api_key=api_key)
 
-
 # ------------------------------------------------------------
 # Shared defaults / helpers
 # ------------------------------------------------------------
 
-# NEW:
-# Central default result so all fallback/error cases are consistent.
 ERROR_FEATURES = {
     "PASSER": "ERROR",
     "RUSHER": "ERROR",
@@ -67,10 +47,6 @@ NONE_FEATURES = {
 
 EXPECTED_KEYS = ["PASSER", "RUSHER", "RECEIVER", "DEFENDER", "DEFENSIVE PLAY TYPE"]
 
-
-# NEW:
-# Force every returned object into the exact schema expected by ham_parser.
-# This prevents weird model outputs from breaking alignment or downstream code.
 def normalize_feature_dict(result: Optional[dict], fallback: Optional[dict] = None) -> dict:
     if fallback is None:
         fallback = ERROR_FEATURES
@@ -93,35 +69,6 @@ def normalize_feature_dict(result: Optional[dict], fallback: Optional[dict] = No
 
     return cleaned
 
-
-# NEW:
-# Repair batch length mismatches instead of throwing away the whole batch.
-#
-# If the LLM returns:
-# - too many items -> trim extras
-# - too few items  -> pad with ERROR rows
-#
-# This is the most important fix for the issue you saw in the logs.
-def repair_batch_alignment(batch_results, expected_count: int):
-    if not isinstance(batch_results, list):
-        batch_results = []
-
-    actual_count = len(batch_results)
-
-    if actual_count != expected_count:
-        print(
-            f"\nWarning: AI returned {actual_count} items instead of {expected_count}. Fixing alignment..."
-        )
-
-    if actual_count > expected_count:
-        batch_results = batch_results[:expected_count]
-
-    elif actual_count < expected_count:
-        batch_results.extend(
-            [ERROR_FEATURES.copy() for _ in range(expected_count - actual_count)]
-        )
-
-    return batch_results
 
 def get_teams_from_title(header_text):
     prompt = f"""
@@ -177,17 +124,9 @@ def precompute_all_features(all_lines, chunk_size=15):
     for i in range(0, total_plays, chunk_size):
         chunk = all_lines[i:i + chunk_size]
 
-        # NEW:
-        # Removed "Play 1:", "Play 2:", etc.
-        # Numbering can sometimes encourage the model to invent extra items
-        # or otherwise get confused about the expected output count.
-        #
-        # We now pass plain bullet-style lines instead.
-        plays_block = "\n".join([f"- {play}" for play in chunk])
+        # NEW: Provide a distinct index for each play in the prompt.
+        plays_block = "\n".join([f"[ID: {idx}] {play}" for idx, play in enumerate(chunk)])
 
-        # NEW:
-        # Stronger prompt language:
-        # explicitly say EXACTLY how many objects should be returned.
         prompt = f"""
 Analyze these {len(chunk)} football plays.
 
@@ -200,9 +139,7 @@ For EACH play, identify:
 
 Rules:
 - Return EXACTLY {len(chunk)} items in the "plays" array.
-- Keep the same order as the input plays.
-- Do not skip any plays.
-- Do not add any extra plays.
+- Include the exact "id" integer provided for each play.
 - If a role is missing, use "NONE".
 - If there is a DEFENDER, extract the DEFENSIVE PLAY TYPE (e.g., TACKLE, SACK, INTERCEPTION, PASS BREAKUP, FORCED FUMBLE). If there is no DEFENDER, use "NONE".
 - Return ONLY valid JSON.
@@ -213,7 +150,7 @@ PLAYS:
 Return this exact JSON shape:
 {{
   "plays": [
-    {{"PASSER": "name", "RUSHER": "name", "RECEIVER": "name", "DEFENDER": "name", "DEFENSIVE PLAY TYPE": "type"}}
+    {{"id": 0, "PASSER": "name", "RUSHER": "name", "RECEIVER": "name", "DEFENDER": "name", "DEFENSIVE PLAY TYPE": "type"}}
   ]
 }}
 """
@@ -239,27 +176,30 @@ Return this exact JSON shape:
 
                 raw_json = json.loads(response.choices[0].message.content)
 
-                # NEW:
-                # Be strict about the top-level response structure.
-                # We expect {"plays": [...]} and treat anything else as malformed.
                 batch_results = raw_json.get("plays")
                 if not isinstance(batch_results, list):
                     raise ValueError("Invalid LLM response format: missing 'plays' list")
 
-                # NEW:
-                # Instead of rejecting mismatched-length batches and eventually
-                # filling the whole chunk with errors, repair the length first.
-                batch_results = repair_batch_alignment(batch_results, len(chunk))
+                # NEW: ALIGNMENT REPAIR VIA INDEX MAPPING
+                # Pre-fill an array with errors exactly matching the chunk size
+                aligned_batch = [ERROR_FEATURES.copy() for _ in range(len(chunk))]
+                
+                for res in batch_results:
+                    play_id = res.get("id")
+                    # If the LLM returned a valid ID that falls within our current chunk bounds, 
+                    # slot it exactly where it belongs. This ignores hallucinated extra plays 
+                    # and correctly leaves missed plays as ERROR_FEATURES.
+                    if isinstance(play_id, int) and 0 <= play_id < len(chunk):
+                        aligned_batch[play_id] = normalize_feature_dict(res, fallback=ERROR_FEATURES)
 
-                # NEW:
-                # Normalize every returned object so all rows have exactly the
-                # keys ham_parser expects.
-                batch_results = [
-                    normalize_feature_dict(res, fallback=ERROR_FEATURES)
-                    for res in batch_results
-                ]
+                actual_count = len(batch_results)
+                if actual_count != len(chunk):
+                    print(
+                        f"\nWarning: AI returned {actual_count} items instead of {len(chunk)}. "
+                        "Index mapping applied successfully."
+                    )
 
-                all_features.extend(batch_results)
+                all_features.extend(aligned_batch)
                 batch_success = True
                 break
 

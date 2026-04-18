@@ -8,7 +8,6 @@ from llm_engine import get_teams_from_title, precompute_all_features
 from pathlib import Path
 
 # Issues
-# 0. Add fumble and safety to series end data.
 # 1. whenever there is a "no play" it should get its own line
 # 2. series count breaks if team scores on kickoff
 # 3. fixing distinguishing kick off, kickoff return fg, fg block etc
@@ -217,7 +216,7 @@ def update_gain(all_plays, field_position):
     return all_plays
 
 
-def update_series_end(all_plays, line):
+def update_series_end(all_plays, line, odk):
     line = line.lower()
     series_end = ""
     if "touchdown" in line:
@@ -226,6 +225,11 @@ def update_series_end(all_plays, line):
         all_plays[-1]["SERIES END"] = "PUNT"
     elif "intercepted" in line:
         series_end = "INT"
+    elif "safety" in line:
+        series_end = "SAFETY"
+    elif len(all_plays) > 0:
+        if "fumble" in all_plays[-1]["Raw Text"] and all_plays[-1]["ODK"] in ["OFF", "DEF"] and odk in ["OFF", "DEF"] and odk != all_plays[-1]["ODK"]:
+            series_end = "FUMBLE"
     if "end of half" in line:
         series_end = "HALF"
     return series_end
@@ -506,7 +510,7 @@ def build_dataframe_from_pdf(pdf_path):
         rp_location = find_direction(line)
         field_position = update_field_position(current_words, odk, odk_team)
         all_plays = update_gain(all_plays, field_position)
-        series_end = update_series_end(all_plays, line)
+        series_end = update_series_end(all_plays, line, odk)
 
         down = line[0]
         distance = update_distance(line)
@@ -520,9 +524,9 @@ def build_dataframe_from_pdf(pdf_path):
                 "SNAP #": "" if snap_count == 0 else snap_count,
                 "DOWN": int(down) if odk != "KO" else "",
                 "DISTANCE": (
-                    int(distance)
-                    if odk != "KO" and str(distance).isdigit()
-                    else distance
+                    "" if odk == "KO" else (
+                        int(distance) if str(distance).isdigit() else distance
+                    )
                 ),
                 "FIELD POSITION (YARDLINE)": field_position,
                 "GAIN": "",
