@@ -58,4 +58,4 @@ def check_accuracy(truth_path, test_path, output_path='accuracy_results.xlsx'):
     print("="*45)
 
 if __name__ == "__main__":
-    check_accuracy('results/HamMid25Truth.xlsx', 'results/HamMid25.xlsx')
+    check_accuracy('TufBat25GT.xlsx', 'TufBat25.xlsx')

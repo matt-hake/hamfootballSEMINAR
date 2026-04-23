@@ -10,7 +10,7 @@ parser:
   structural_assumptions:
     - "Teams are in the first 20 lines"
     - "Drives begin with 'drive start'"
-    - "Formatting follows standard Down/Distance/Field Position order"
+    - "First column formatting follows standard Down/Distance/Field Position order"
   known_bugs:
     - missing increment series after half
     - llm array misalignment
