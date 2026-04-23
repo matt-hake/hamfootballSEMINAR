@@ -18,6 +18,7 @@ PAGE_START = 5  # indicates what page to start scraping on - 1
 DOWN_POSSIBILITIES = ["1", "2", "3", "4"]
 FIELD_POSTION_LOCATION = 5  # where in the sentence the field postition can be found
 NO_PLAY_WORDS = ["timeout", "time out", "end of game", "2:00"]
+TIME_IN_QUARTER = 15
 
 
 # get_raw_lines() gets all the lines from the pdf (starting at page 6)
@@ -70,7 +71,11 @@ def quarter_update(line):
 # not_play() makes checks to see if the line is actually a play, if not go to next line.
 def not_play(line, line_number):
     line = line.lower()
-    if not line or (line[0] not in DOWN_POSSIBILITIES and "kickoff" not in line):
+    if not line:
+        return True
+    if find_score(line)["is_score_line"]:
+        return True
+    if line[0] not in DOWN_POSSIBILITIES and "kickoff" not in line:
         return True
     for word in NO_PLAY_WORDS:
         if word in line:
@@ -263,189 +268,97 @@ def find_direction(line):
     # If the loop finishes and nothing was found, return an empty string
     return ""
 
+#written by Google Gemini
+def find_game_situation(quarter, snap_count, all_plays, time_remaining, score_diff):
+    """
+    quarter: 1, 2, 3, 4
+    snap_count: int (1 is the start of a drive)
+    all_plays: list of dicts (to check previous play for turnovers)
+    time_remaining: int (minutes)
+    score_diff: int (Positive if leading, negative if trailing)
+    """
+    situations = []
 
-def find_game_situation(quarter, snap_count, all_plays, time_remaining):
-    # Sudden change - (drive starting off a turnover)
-    if all_plays[-1]["SERIES END"] == "TURNOVER":
-        return "Sudden change"
-    # P&10 - 1st play of a drive.
-    elif snap_count == 1:
-        return "P&10"
-    # 2 minute drill - (a team's last possession at the end of the first half, under 3 minutes
-    # (continued) remaining on the clock at the start of the drive OR in 4th quarter, the team's possession when
-    # (continued) trailing with under 4 minutes left in the half).
-    # 4 minute drill - (team possession with ball, leading with less than 6 minutes left on the clock in the 4th quarter.)
-    # Middle 8 - (last 4 minutes of a 1st half and first 4 minutes of 2nd half)
-    elif (quarter == 2 and time_remaining <= 4) or (
-        quarter == 3 and time_remaining >= 11
-    ):
-        return "Middle 8"
-    return ""
+    # 1. Sudden change (drive starting off a turnover)
+    # Checking if all_plays has data to avoid an IndexError
+    if all_plays and all_plays[-1].get("SERIES END") == "TURNOVER":
+        situations.append("Sudden change")
+
+    # 2. P&10 (1st play of a drive)
+    if snap_count == 1:
+        situations.append("P&10")
+
+    # 3. 2 minute drill
+    # Rule A: End of 1st half, under 3 mins
+    if quarter == 2 and time_remaining < 3:
+        situations.append("2 minute drill")
+    # Rule B: 4th quarter, trailing, under 4 mins
+    elif quarter == 4 and score_diff < 0 and time_remaining < 4:
+        situations.append("2 minute drill")
+
+    # 4. 4 minute drill (Leading, 4th quarter, < 6 mins)
+    if quarter == 4 and score_diff > 0 and time_remaining < 6:
+        situations.append("4 minute drill")
+
+    # 5. Middle 8 (Last 4 of 1st half, First 4 of 2nd half)
+    if (quarter == 2 and time_remaining <= 4) or (quarter == 3 and time_remaining >= 11):
+        situations.append("Middle 8")
+
+    # Return combined string or empty string if nothing matches
+    return " + ".join(situations) if situations else ""
 
 
 # "3rd Quarter - less than 32 points would be considered in range"
 # "4th quarter - less than 25 points would be a close game"
-def find_score_differential(quarter, first_team_points, second_team_points):
-    if quarter == 3:
-        if abs(first_team_points - second_team_points) <= 32:
+def determine_close_game(quarter, score_difference):
+    if quarter in [1, 2]:
+        return "close game"
+    elif quarter == 3:
+        if score_difference <= 32:
             return "in range"
         else:
             return "blowout"
     elif quarter == 4:
-        if abs(first_team_points - second_team_points) <= 25:
+        if score_difference <= 25:
             return "close game"
         else:
             return "blowout"
     return ""
 
-
-"""
-# main() controls the flow of the program 
-# var pdf_path: the path the to play-by-play pdf
-# var excel_output: the path to output the excel file
-def parser(pdf_path, excel_output): 
-    # var all_plays: a list of dictionaries that is copied to make the excel sheet
-    # var odk: offense, defense, or special teams information
-    # var series_trigger: the first team to have possession ("OFF" or "DEF")
-    # var snap_count/series_count/play_count: snap/series/play count in current possession/series
-    # var quarter: current quarter of the game
-    # var down_overflow: true if the down information can't be found on the first line. 
-    all_plays = []
-    odk, series_trigger = None, None
-    snap_count, series_count, play_count, quarter = 0, 0, 1, 1
-    down_overflow = False
+# written by Google Gemini
+# find_score takes a line, determines if the line is giving a score then returns that score if it exists.
+def find_score(line):
+    # Word(s) + Number + Hyphen + Number + Word(s)
     
-    raw_lines = get_raw_lines(pdf_path)
-    odk_team = set_odk_team(pdf_path)
-
-    line_number = 0
-    while line_number < len(raw_lines):
-        line = raw_lines[line_number].strip()
-
-        if quarter_update(line):
-            quarter += 1
-        
-        if not_play(line, line_number):
-            line_number += 1
-            continue
-
-        current_words = line.split()
-
-        if len(all_plays) > 1:
-            current_words, line, down_overflow = check_fp_lost(current_words, raw_lines, line_number, line)
-        
-        line_number, line = check_add_next_line(raw_lines, line_number, line, down_overflow)
-
-        # Update odk
-        dummy_odk = odk
-        odk, go_next_line = update_odk(current_words, line, odk_team, odk)
-        if go_next_line:
-            line_number += 1
-            continue
-        
-        # Fixes bug where blank space after field position is ignored
-        current_words = blank_space_bug(odk, current_words)
-        
-        # Update Snap Count
-        snap_count = 0
-        if len(all_plays) >= 1 and odk in ["DEF", "OFF"]:
-            if odk == all_plays[-1]["ODK"]:
-                snap_count = int(all_plays[-1]["SNAP #"]) + 1
-            else:
-                snap_count = 1
-            
-        # Update Series Count (THIS COULD BREAK IF TEAM SCORES ON KICKOFF)
-        if series_trigger is None and odk in ["OFF", "DEF"]:
-            series_trigger = odk
-        series_count = update_series_count(all_plays, series_trigger, odk, series_count)
-        
-        # Look for Run/Pass
-        run_or_pass = update_run_pass(line)
-        rp_location = find_direction(line)
-        
-        # Get Field Position
-        field_position = update_field_position(current_words, odk, odk_team)
-        
-        # Get Gain (doesn't yet count the last play in a possession)
-        all_plays = update_gain(all_plays, field_position)
-
-        # check if the series is over (only works for touchdowns and punts right now)
-        series_end = update_series_end(all_plays, line)
-            
-        # Get Down (1st char) and Distance (4th word)
-        down = line[0]
-        distance = update_distance(line)
- 
-        # Updates the row with all the extracted features (not putting this in a function because too many variables)
-        all_plays.append({
-            "HUMAN VERIFIED?": "No",
-            "PLAY #": play_count,
-            "ODK": odk,
-            "SERIES": series_count if odk == "DEF" or odk == "OFF" else "",
-            "SNAP #": "" if snap_count == 0 else snap_count,
-            "DOWN": int(down) if odk != "KO" else "",
-            "DISTANCE": int(distance) if odk != "KO" else "",
-            "FIELD POSITION (YARDLINE)": field_position,
-            "GAIN": "",
-            "HASH": "",
-            "RUN/PASS": run_or_pass,
-            "QUARTER": quarter,
-            "SERIES END": series_end,
-            "PASSER": "",
-            "RUSHER": "",
-            "RECEIVER": "",
-            "DEFENDER": "",
-            "DEFENSIVE PLAY TYPE": "",
-            "Raw Text": line
-        })
-
-        odk = dummy_odk
-        play_count += 1
-        line_number += 1
-
-        print(f"\rPlay #{play_count} complete... ", end="", flush=True)
+    pattern = r"^(.+?)\s+(\d+)-(\d+)\s+(.+)$"
+    match = re.search(pattern, line.strip())
     
-    # written by Google Gemini 324 - 337
-    # sends prompts to llm in chunks so that fewer prompts are required
-    print("\n\n non-player logic complete! Filtering plays for LLM extraction...")
+    if match:
+        return {
+            "is_score_line": True,
+            "team1": match.group(1),
+            "score1": int(match.group(2)),
+            "score2": int(match.group(3)),
+            "team2": match.group(4)
+        }
     
-    # 1. Collect ONLY the OFF/DEF plays, keeping track of their exact row index
-    plays_to_process = []
-    original_indices = []
+    return {"is_score_line": False}
 
-    for index, play in enumerate(all_plays):
-        if play["ODK"] in ["OFF", "DEF"]:
-            plays_to_process.append(play["Raw Text"])
-            original_indices.append(index)
-        else:
-            # It's Special Teams. Default to NONE so the Excel cells aren't blank.
-            play["PASSER"] = "NONE"
-            play["RUSHER"] = "NONE"
-            play["RECEIVER"] = "NONE"
-            play["DEFENDER"] = "NONE"
+#Written by Google Gemini
+def get_minutes_left(line):
+    # Regex Breakdown:
+    # (\d{1,2}) -> Match 1 or 2 digits (this is our minutes)
+    # :         -> Match the literal colon
+    # \d{2}     -> Match exactly 2 digits (the seconds)
     
-    # 2. Run the chunking function ONLY on the filtered plays
-    if plays_to_process:
-        print(f"Skipping special teams. Sending {len(plays_to_process)} plays to LLM...")
-        llm_results = precompute_all_features(plays_to_process, chunk_size=15)
-        
-        # 3. Stitch the LLM results back into the correct original dictionaries
-        # zip() pairs up the original row number with the LLM's answer
-        for original_index, features in zip(original_indices, llm_results):
-            all_plays[original_index]["PASSER"] = features.get("PASSER", "NONE")
-            all_plays[original_index]["RUSHER"] = features.get("RUSHER", "NONE")
-            all_plays[original_index]["RECEIVER"] = features.get("RECEIVER", "NONE")
-            all_plays[original_index]["DEFENDER"] = features.get("DEFENDER", "NONE")
-    else:
-        print("No offensive or defensive plays found.")
-        
-    all_plays[-1]["SERIES END"] = "GAME"
-    df = pd.DataFrame(all_plays)
-    df.to_excel(excel_output, index=False)
-"""
-
-# new functions for integration:
-
+    pattern = r"(\d{1,2}):\d{2}"
+    match = re.search(pattern, line)
+    
+    if match:
+        # match.group(1) gives us the digits before the colon
+        return int(match.group(1))
+    
+    return None
 
 # slightly modified parser to return path for front end (CITE: ChatGPT 5.2)
 # var pdf_path: the path the to play-by-play pdf
@@ -464,10 +377,21 @@ def build_dataframe_from_pdf(pdf_path):
 
     raw_lines = get_raw_lines(pdf_path)
     odk_team = set_odk_team(pdf_path)
+    score_difference = 0
+    minutes_left = TIME_IN_QUARTER
 
     line_number = 0
     while line_number < len(raw_lines):
+
         line = raw_lines[line_number].strip()
+
+        score_update = find_score(line)
+        if score_update["is_score_line"]:
+            score_difference = abs(score_update["score1"] - score_update["score2"])
+        
+        current_time_check = get_minutes_left(line)
+        if current_time_check is not None:
+            minutes_left = current_time_check
 
         if quarter_update(line):
             quarter += 1
@@ -511,6 +435,8 @@ def build_dataframe_from_pdf(pdf_path):
         field_position = update_field_position(current_words, odk, odk_team)
         all_plays = update_gain(all_plays, field_position)
         series_end = update_series_end(all_plays, line, odk)
+        close_game = determine_close_game(quarter, score_difference)
+        game_situation = find_game_situation(quarter, snap_count, all_plays, minutes_left, score_difference)
 
         down = line[0]
         distance = update_distance(line)
@@ -535,8 +461,8 @@ def build_dataframe_from_pdf(pdf_path):
                 "QUARTER": quarter,
                 "SERIES END": series_end,
                 "R/P Location": rp_location,
-                "Score Differential": "",
-                "Game Situation": "",
+                "Score Differential": close_game,
+                "Game Situation": game_situation,
                 "PASSER": "",
                 "RUSHER": "",
                 "RECEIVER": "",
