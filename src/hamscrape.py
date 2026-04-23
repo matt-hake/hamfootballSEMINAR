@@ -431,6 +431,7 @@ def find_pdf_landing_link(
         if path.endswith(".pdf"):
             candidates.append(absolute_url)
 
+    #take the best match
     for candidate in candidates:
         if urlparse(candidate).path.lower().endswith("/pdf"):
             return candidate
@@ -453,15 +454,18 @@ def parse_home_away_from_pdf_landing(
     - "at" means the source school is the away team
     - "vs" means the source school is the home team
     """
+    #get path, extract part with the info
     path = urlparse(pdf_landing_url).path.lower()
     match = re.search(r"/boxscore/(at|vs)-([^/]+)/", path)
     if not match:
         return None
 
+    #pull out and store data
     at_vs, opponent_slug = match.group(1), match.group(2)
     school_token = tokenize(school_name)
     opponent_token = slug_to_team(opponent_slug)
 
+    #return order depends on the value of at_vs
     return (
         (opponent_token, school_token)
         if at_vs == "at"
