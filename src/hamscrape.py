@@ -492,6 +492,7 @@ def find_fullscreen_pdf(
         ) from exc
 
     for anchor in soup.find_all("a"):
+        #e.g. "view full screen pdf"
         text = (anchor.get_text(" ", strip=True) or "").lower()
         href = anchor.get("href") or ""
 
@@ -522,6 +523,8 @@ def download_file(session: requests.Session, url: str, out_path: Path) -> None:
     Writing to a temp file first avoids leaving behind a misleading partial
     PDF if the download is interrupted or fails midway.
     """
+    #make sure output directory exists (creating parent directories,
+    #accounting for pre-existence as necessary)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     temp_path = out_path.with_suffix(out_path.suffix + ".part")
 
@@ -529,7 +532,9 @@ def download_file(session: requests.Session, url: str, out_path: Path) -> None:
         with session.get(url, stream=True, timeout=(15, 90)) as response:
             response.raise_for_status()
 
+            #"wb" -> writing in binary mode, safer than regular text
             with open(temp_path, "wb") as file_obj:
+                #pull out chunks from the page content, write to file
                 for chunk in response.iter_content(chunk_size=1024 * 256):
                     if chunk:
                         file_obj.write(chunk)
