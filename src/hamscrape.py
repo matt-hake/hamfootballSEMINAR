@@ -416,6 +416,8 @@ def find_pdf_landing_link(
         if not href:
             continue
 
+        #standardize link
+        #CITE: https://docs.python.org/3/library/urllib.parse.html
         absolute_url = urljoin(stats_url, href)
         path = urlparse(absolute_url).path.lower()
         text = (anchor.get_text(" ", strip=True) or "").lower()
@@ -429,6 +431,7 @@ def find_pdf_landing_link(
         if path.endswith(".pdf"):
             candidates.append(absolute_url)
 
+    #take the best match
     for candidate in candidates:
         if urlparse(candidate).path.lower().endswith("/pdf"):
             return candidate
@@ -451,15 +454,18 @@ def parse_home_away_from_pdf_landing(
     - "at" means the source school is the away team
     - "vs" means the source school is the home team
     """
+    #get path, extract part with the info
     path = urlparse(pdf_landing_url).path.lower()
     match = re.search(r"/boxscore/(at|vs)-([^/]+)/", path)
     if not match:
         return None
 
+    #pull out and store data
     at_vs, opponent_slug = match.group(1), match.group(2)
     school_token = tokenize(school_name)
     opponent_token = slug_to_team(opponent_slug)
 
+    #return order depends on the value of at_vs
     return (
         (opponent_token, school_token)
         if at_vs == "at"
@@ -486,6 +492,7 @@ def find_fullscreen_pdf(
         ) from exc
 
     for anchor in soup.find_all("a"):
+        #e.g. "view full screen pdf"
         text = (anchor.get_text(" ", strip=True) or "").lower()
         href = anchor.get("href") or ""
 
@@ -516,6 +523,8 @@ def download_file(session: requests.Session, url: str, out_path: Path) -> None:
     Writing to a temp file first avoids leaving behind a misleading partial
     PDF if the download is interrupted or fails midway.
     """
+    #make sure output directory exists (creating parent directories,
+    #accounting for pre-existence as necessary)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     temp_path = out_path.with_suffix(out_path.suffix + ".part")
 
@@ -523,7 +532,9 @@ def download_file(session: requests.Session, url: str, out_path: Path) -> None:
         with session.get(url, stream=True, timeout=(15, 90)) as response:
             response.raise_for_status()
 
+            #"wb" -> writing in binary mode, safer than regular text
             with open(temp_path, "wb") as file_obj:
+                #pull out chunks from the page content, write to file
                 for chunk in response.iter_content(chunk_size=1024 * 256):
                     if chunk:
                         file_obj.write(chunk)
