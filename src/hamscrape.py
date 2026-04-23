@@ -416,6 +416,8 @@ def find_pdf_landing_link(
         if not href:
             continue
 
+        #standardize link
+        #CITE: https://docs.python.org/3/library/urllib.parse.html
         absolute_url = urljoin(stats_url, href)
         path = urlparse(absolute_url).path.lower()
         text = (anchor.get_text(" ", strip=True) or "").lower()
