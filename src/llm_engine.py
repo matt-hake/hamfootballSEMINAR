@@ -1,11 +1,6 @@
 # llm_engine.py
-#
-# Purpose:
-# Handle all LLM-based extraction for the football PDF parser.
-#
-# Major revisions in this version:
-# 1. Added explicit ID mapping to ensure robust alignment even if 
-#    the LLM drops or adds extra lines.
+# Written by Gemini
+# Handles all LLM-based extraction for the football PDF parser.
 
 import os
 import json

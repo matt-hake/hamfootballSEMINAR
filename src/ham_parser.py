@@ -8,7 +8,6 @@ from llm_engine import get_teams_from_title, precompute_all_features
 from pathlib import Path
 
 # Issues
-# 1. whenever there is a "no play" it should get its own line
 # 2. series count breaks if team scores on kickoff
 # 3. fixing distinguishing kick off, kickoff return fg, fg block etc
 # 4. figure out how to get the same # of plays everytime
