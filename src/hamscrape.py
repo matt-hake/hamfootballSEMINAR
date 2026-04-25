@@ -45,7 +45,7 @@ from errors import (
 )
 
 # Default year used only when the caller does not supply one explicitly.
-DEFAULT_YEAR = 2025
+DEFAULT_YEAR = 2025 # TODO : change how this is implemented, have a way to track this for the user
 
 # Path to the client-editable CSV config file.
 BASE_DIR = Path(__file__).resolve().parents[1]
