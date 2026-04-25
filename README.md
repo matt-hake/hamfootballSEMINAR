@@ -18,21 +18,21 @@ This project provides a **web-based interface** for running a Python data pipeli
 
 **For Mac:**
 
-        a. Visual Studio Code: Paste this link in your browser -> https://code.visualstudio.com/download 
+a. Visual Studio Code: Paste this link in your browser -> https://code.visualstudio.com/download 
 
-        b. Click the download that corresponds to your operating system (Mac)
+b. Click the download that corresponds to your operating system (Mac)
 
-        c. Open Visual Studio Code
+c. Open Visual Studio Code
 
-        d. Hit the following keys, Cmd + Shift + ` 
+d. Hit the following keys, Cmd + Shift + ` 
 
-        e. In the window that just opened, copy and paste the line below and hit enter. If prompted to install, click "install".
+e. In the window that just opened, copy and paste the line below and hit enter. If prompted to install, click "install".
 
 ```bash
 git    
 ```                
 
-        f. Once installation finishes, paste the entire block of code below (all together, not one line at a time) into the same window and hit enter. When prompted, paste your api key into the window and hit enter.
+f. Once installation finishes, paste the entire block of code below (all together, not one line at a time) into the same window and hit enter. When prompted, paste your api key into the window and hit enter.
 
 ```bash
 git clone https://github.com/hamfootballSEMINAR/hamfootballSEMINAR.git && \ cd hamfootballSEMINAR && \
@@ -48,39 +48,39 @@ echo "GROQ_API_KEY=\"$apikey\"" > .env && \
 echo "Success! you are now setup to run the program."
 ```
 
-        g. You are ready to move on to step 2 (Running the Code)
+g. You are ready to move on to step 2 (Running the Code)
 
 **For Windows:**
 
-        a. Visual Studio Code: Paste this link in your browser -> https://code.visualstudio.com/download 
+a. Visual Studio Code: Paste this link in your browser -> https://code.visualstudio.com/download 
 
-        b. Click the download that corresponds to your operating system (Windows)
+b. Click the download that corresponds to your operating system (Windows)
 
-        c. Open Visual Studio Code
+c. Open Visual Studio Code
 
-        d. Hit the following keys, Ctrl + Shift + `
+d. Hit the following keys, Ctrl + Shift + `
 
-        e. In the window that just opened, copy and paste the line below and hit enter.
+e. In the window that just opened, copy and paste the line below and hit enter.
 
 ```bash
 python
 ```
 
-        f. If Microsoft Store opened, click "get" or "install"
+f. If Microsoft Store opened, click "get" or "install"
 
-        g. copy and paste the line below and hit enter (in the same window from step e)
+g. copy and paste the line below and hit enter (in the same window from step e)
 
 ```bash
 winget install --id Git.Git -e --source winget
 ```
 
-        h. A progress bar will appear in the terminal. When prompted "Do you agree to all the source agreements terms?" type "Y" and hit enter.
+h. A progress bar will appear in the terminal. When prompted "Do you agree to all the source agreements terms?" type "Y" and hit enter.
 
-        i. Quit VSCode and reopen it 
+i. Quit VSCode and reopen it 
 
-        j. Hit the following keys, Ctrl + Shift + `
+j. Hit the following keys, Ctrl + Shift + `
 
-        k. Paste the entire block of code below (all together, not one line at a time) into the same window and hit enter. When prompted, paste your api key into the window and hit enter.
+k. Paste the entire block of code below (all together, not one line at a time) into the same window and hit enter. When prompted, paste your api key into the window and hit enter.
 
 ```bash
 git clone https://github.com/hamfootballSEMINAR/hamfootballSEMINAR.git; `
@@ -95,54 +95,54 @@ $apikey = Read-Host "Paste your GROQ_API_KEY here"; `
 Write-Host "Success! you are now setup to run the program." -ForegroundColor Green
 ```
 
-        l. You are ready to move on to step 2 (Running the Code)
+l. You are ready to move on to step 2 (Running the Code)
 
 ## 2. Running the Code (do this when you want to run it in the future)
 
 For Mac:
 
-        a. Open the Virtual Studio Code Application
+a. Open the Virtual Studio Code Application
 
-        b. Navigate to the hamfootballSEMINAR/src directory (you may already be in it)
+b. Navigate to the hamfootballSEMINAR/src directory (you may already be in it)
 
-                i. Cmd + o 
+i. Cmd + o 
 
-                ii. Find and select the folder named hamfootballSEMINAR
+ii. Find and select the folder named hamfootballSEMINAR
 
-        c. In the terminal (Cmd + Shift + `) copy and paste the line below and hit enter
+c. In the terminal (Cmd + Shift + `) copy and paste the line below and hit enter
 
 ```bash
 source .venv/bin/activate && python3 -m flask --app src/app/api.py --debug run
 ```
 
-        d. Look at the line above the yellow text, there will be a line that says something similar to  
-        "* Running on http://127.0.0.1:5000", hover over this link and click "follow link" when it appears (or hover over it and do cmd + click)
+d. Look at the line above the yellow text, there will be a line that says something similar to  
+"* Running on http://127.0.0.1:5000", hover over this link and click "follow link" when it appears (or hover over it and do cmd + click)
 
 For Windows:
 
-        a. Open the Virtual Studio Code Application
+a. Open the Virtual Studio Code Application
 
-        b. Navigate to the hamfootballSEMINAR/src directory (you may already be in it)
+b. Navigate to the hamfootballSEMINAR/src directory (you may already be in it)
 
-                i. Ctrl + o
+i. Ctrl + o
 
-                ii. Find and select the folder named hamfootballSEMINAR
+ii. Find and select the folder named hamfootballSEMINAR
 
-        c. In the terminal (Ctrl + Shift + `) copy and paste the line below and hit enter
+c. In the terminal (Ctrl + Shift + `) copy and paste the line below and hit enter
 
 ```bash
 .\.venv\Scripts\activate; python -m flask --app src/app/api.py --debug run
 ```
 
-        d. Look at the line above the yellow text, there will be a line that says something similar to  
-        "* Running on http://127.0.0.1:5000", hover over this link and click "follow link" when it appears (or hover over it and do ctrl + click)
+d. Look at the line above the yellow text, there will be a line that says something similar to  
+"* Running on http://127.0.0.1:5000", hover over this link and click "follow link" when it appears (or hover over it and do ctrl + click)
 
 ## 3. Navigating the UI
-        a. At the top of the page, select the years you would like scrape.
-        b. Select the school(s) you are interested in
-        c. click "find games", the scraper will now find all requested games (this may take 10-20 seconds)
-        d. Under "Discovered Games", find the game(s) you are interested in and click "Parse Game" (this may take a few minutes)
-        WARNING: Do not try to parse multiple games at once!
-        e. You can then review the spreadsheet in the browser or click "Download Excel" to make edits
-        f. Notice the first column of the spreadsheet "HUMAN VERIFIED", once a row is verified, you can click on the cell in the first column and click "yes".
-        g. Once you are finished click back into the terminal and hit ctrl + c to close the vitrual environment
+a. At the top of the page, select the years you would like scrape.
+b. Select the school(s) you are interested in
+c. click "find games", the scraper will now find all requested games (this may take 10-20 seconds)
+d. Under "Discovered Games", find the game(s) you are interested in and click "Parse Game" (this may take a few minutes)
+WARNING: Do not try to parse multiple games at once!
+e. You can then review the spreadsheet in the browser or click "Download Excel" to make edits
+f. Notice the first column of the spreadsheet "HUMAN VERIFIED", once a row is verified, you can click on the cell in the first column and click "yes".
+g. Once you are finished click back into the terminal and hit ctrl + c to close the vitrual environment
