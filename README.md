@@ -1,8 +1,8 @@
 # NESCAC Football PDF Pipeline
 
 This project provides a **web-based interface** for running a Python data pipeline that:
-1. Scrapes football boxscore PDFs from NESCAC athletics sites  
-2. Converts a PDF into an Excel file
+1. Scrapes football play-by-play PDFs from NESCAC athletics sites  
+2. Converts play-by-play PDF into an Excel file
 3. Allows user to download the results 
 
 ---
@@ -99,7 +99,7 @@ l. You are ready to move on to step 2 (Running the Code)
 
 ## 2. Running the Code (do this when you want to run it in the future)
 
-For Mac:
+**For Mac:**
 
 a. Open the Virtual Studio Code Application
 
@@ -118,7 +118,7 @@ source .venv/bin/activate && python3 -m flask --app src/app/api.py --debug run
 d. Look at the line above the yellow text, there will be a line that says something similar to  
 "* Running on http://127.0.0.1:5000", hover over this link and click "follow link" when it appears (or hover over it and do cmd + click)
 
-For Windows:
+**For Windows:**
 
 a. Open the Virtual Studio Code Application
 
@@ -138,11 +138,18 @@ d. Look at the line above the yellow text, there will be a line that says someth
 "* Running on http://127.0.0.1:5000", hover over this link and click "follow link" when it appears (or hover over it and do ctrl + click)
 
 ## 3. Navigating the UI
+
 a. At the top of the page, select the years you would like scrape.
+
 b. Select the school(s) you are interested in
+
 c. click "find games", the scraper will now find all requested games (this may take 10-20 seconds)
+
 d. Under "Discovered Games", find the game(s) you are interested in and click "Parse Game" (this may take a few minutes)
-WARNING: Do not try to parse multiple games at once!
+**WARNING: Do not try to parse multiple games at once!**
+
 e. You can then review the spreadsheet in the browser or click "Download Excel" to make edits
+
 f. Notice the first column of the spreadsheet "HUMAN VERIFIED", once a row is verified, you can click on the cell in the first column and click "yes".
+
 g. Once you are finished click back into the terminal and hit ctrl + c to close the vitrual environment
