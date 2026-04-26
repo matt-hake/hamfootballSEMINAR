@@ -252,6 +252,121 @@
       color: #555;
     }
 
+    /* ------------------------------------------------------------
+   HITL Modal Styling
+   ------------------------------------------------------------ */
+
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-overlay.active { display: flex; }
+
+.hitl-container {
+  background: #d1e3f8; /* Light blue background from screenshot */
+  width: 90%;
+  max-width: 800px;
+  padding: 40px;
+  border-radius: 8px;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  min-height: 600px; /* Keeps the green button in the same spot */
+  display: flex;
+  flex-direction: column;
+}
+
+.hitl-raw-text {
+  font-size: 1.5rem;
+  margin-bottom: 30px;
+  line-height: 1.4;
+  color: #000;
+  min-height: 80px;
+}
+
+.hitl-edit-header {
+  text-align: center;
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.hitl-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-width: 400px;
+  flex-grow: 1;
+}
+
+.hitl-row {
+  display: flex;
+  align-items: stretch;
+  gap: 15px;
+}
+
+.hitl-label {
+  background: #6d93d6; /* The darker blue for buttons */
+  color: #000;
+  width: 140px;
+  padding: 12px;
+  text-align: center;
+  font-weight: bold;
+  border: 1px solid #4a6fa5;
+  border-radius: 4px;
+}
+
+.hitl-input {
+  flex-grow: 1;
+  background: #f4f4f4;
+  border: 1px solid #ccc;
+  padding: 12px;
+  font-size: 1.2rem;
+  text-align: center;
+  border-radius: 4px;
+}
+
+.hitl-check-btn {
+  position: absolute;
+  bottom: 40px;
+  right: 40px;
+  background: #7ca55a; /* Green from screenshot */
+  width: 100px;
+  height: 80px;
+  border-radius: 4px;
+  border: 1px solid #5d7c43;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: #333;
+}
+
+.hitl-check-btn:hover { background: #8bb866; }
+
+.hitl-progress {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.close-modal {
+  position: absolute;
+  top: 10px;
+  left: 15px;
+  cursor: pointer;
+  font-size: 1.5rem;
+  background: none;
+  color: #333;
+}
+
   </style>
 </head>
 
@@ -559,244 +674,190 @@
        Result rendering
        ------------------------------------------------------------ */
 
-    function renderResults(records) {
-      /*
-        Render one result card per discovered game/PDF record.
-
-        Each card includes:
-        - metadata
-        - Parse Game button
-        - review toggle
-        - Excel download link
-        - hidden side-by-side review area
-      */
-      resultsEl.innerHTML = "";
-
-      if (!records || records.length === 0) {
-        resultsEl.innerHTML = '<div class="muted">No game records found.</div>';
-        return;
-      }
-
-      for (const record of records) {
-        const card = document.createElement("div");
-        card.className = "result-item";
-
-        const title = document.createElement("h4");
-        title.textContent = `${record.school} vs ${record.opponent}`;
-
-        const meta = document.createElement("div");
-        meta.className = "small";
-        meta.textContent =
-          `Date: ${record.date} | Home: ${record.home_team} | Away: ${record.away_team}`;
-
-        const boxscore = buildDetailLine("Boxscore", record.boxscore_url);
-        const pdf = buildDetailLine("PDF", record.pdf_url);
-        const yearLine = buildDetailLine("Year", record.year);
-
-        const actionRow = document.createElement("div");
-        actionRow.className = "action-row";
-
-        const parseBtn = document.createElement("button");
-        parseBtn.textContent = "Parse Game";
-
-        const reviewBtn = document.createElement("a");
-        reviewBtn.className = "link-button";
-        reviewBtn.textContent = "Open Review";
-        reviewBtn.href = "#";
-
-        /*
-          Since anchor elements do not support the disabled attribute,
-          aria-disabled gives us a semantic flag we can check in JS/CSS.
-        */
-        reviewBtn.setAttribute("aria-disabled", "true");
-
-        const excelLink = document.createElement("a");
-        excelLink.className = "download-link";
-        excelLink.textContent = "Download Excel";
-        excelLink.href = "#";
-        excelLink.target = "_blank";
-        excelLink.rel = "noopener noreferrer";
-
-        /*
-          rel="noopener noreferrer" is a security best practice when using
-          target="_blank", because it prevents the new tab from getting a
-          direct handle back to the opener page.
-        */
-        excelLink.setAttribute("aria-disabled", "true");
-
-        actionRow.appendChild(parseBtn);
-        actionRow.appendChild(reviewBtn);
-        actionRow.appendChild(excelLink);
-
-        const output = document.createElement("div");
-        output.className = "small output";
-
-        /*
-          This wrapper stays hidden until parsing succeeds.
-          Then it becomes a side-by-side PDF/table review area.
-        */
-        const reviewWrap = document.createElement("div");
-        reviewWrap.className = "review-wrap";
-
-        const reviewGrid = document.createElement("div");
-        reviewGrid.className = "review-grid";
-
-        const pdfPanel = document.createElement("div");
-        pdfPanel.className = "review-panel";
-
-        const pdfPanelTitle = document.createElement("h5");
-        pdfPanelTitle.textContent = "Original PDF";
-
-        const reviewFrame = document.createElement("iframe");
-        reviewFrame.className = "review-frame";
-        reviewFrame.title = `PDF review for ${record.school} vs ${record.opponent}`;
-
-        pdfPanel.appendChild(pdfPanelTitle);
-        pdfPanel.appendChild(reviewFrame);
-
-        const tablePanel = document.createElement("div");
-        tablePanel.className = "review-panel";
-
-        const tablePanelTitle = document.createElement("h5");
-        tablePanelTitle.textContent = "Parsed Spreadsheet Preview";
-
-        const tableHost = document.createElement("div");
-        tableHost.className = "review-empty";
-        tableHost.textContent = "Run the parser to load preview rows.";
-
-        tablePanel.appendChild(tablePanelTitle);
-        tablePanel.appendChild(tableHost);
-
-        reviewGrid.appendChild(pdfPanel);
-        reviewGrid.appendChild(tablePanel);
-        reviewWrap.appendChild(reviewGrid);
-
-        parseBtn.addEventListener("click", async () => {
+       function renderResults(records) {
           /*
-            Parse flow for one discovered game:
-            1. Disable the button
-            2. POST the record to /api/parse-pdf
-            3. Load the returned PDF preview + table preview
-            4. Enable review/download controls
+            Render one result card per discovered game/PDF record.
           */
-          try {
-            parseBtn.disabled = true;
+          resultsEl.innerHTML = "";
 
-            output.className = "small output";
-            output.textContent = "Parsing PDF and preparing review view...";
-
-            const resp = await fetch("/api/parse-pdf", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-
-              /*
-                Send the selected backend record back to the API so the
-                backend knows exactly which discovered game to download/parse.
-              */
-              body: JSON.stringify({ record })
-            });
-
-            const data = await resp.json();
-
-            if (!resp.ok || !data.ok) {
-              const detail = data.detail ? ` (${data.detail})` : "";
-              throw new Error((data.error || "Failed to parse PDF") + detail);
-            }
-
-            /*
-              Prefer backend-local preview URLs when available.
-              Fall back to older field names or the original PDF URL.
-            */
-            const pdfPreviewUrl =
-              data.pdf_preview_url ||
-              data.preview_url ||
-              record.pdf_url ||
-              "";
-
-            if (pdfPreviewUrl) {
-              reviewFrame.src = pdfPreviewUrl;
-            }
-
-            /*
-              Once the Excel file is ready, activate the download link.
-            */
-            if (data.excel_download_url) {
-              excelLink.href = data.excel_download_url;
-              excelLink.setAttribute("aria-disabled", "false");
-            }
-
-            /*
-              Once parse succeeds, allow the user to open/close the review area.
-            */
-            reviewBtn.setAttribute("aria-disabled", "false");
-
-            const rows = normalizeRows(data);
-            const columns = normalizeColumns(data, rows);
-
-            /*
-              Replace the placeholder text with the generated preview table.
-            */
-            tableHost.innerHTML = "";
-            tableHost.className = "";
-            tableHost.appendChild(buildReviewTable(columns, rows));
-
-            reviewWrap.classList.add("open");
-            reviewBtn.textContent = "Hide Review";
-
-            output.className = "small output success-text";
-            output.textContent = `Parsed successfully: ${data.filename || "Excel output ready"}`;
-
-          } catch (err) {
-            output.className = "small output error-text";
-            output.textContent = `Error: ${err.message}`;
-          } finally {
-            /*
-              Re-enable parse button whether request succeeded or failed.
-            */
-            parseBtn.disabled = false;
-          }
-        });
-
-        reviewBtn.addEventListener("click", (event) => {
-          /*
-            Toggle the side-by-side review section open/closed.
-          */
-          event.preventDefault();
-
-          if (reviewBtn.getAttribute("aria-disabled") === "true") {
+          if (!records || records.length === 0) {
+            resultsEl.innerHTML = '<div class="muted">No game records found.</div>';
             return;
           }
 
-          reviewWrap.classList.toggle("open");
+          for (const record of records) {
+            const card = document.createElement("div");
+            card.className = "result-item";
 
-          if (reviewWrap.classList.contains("open")) {
-            reviewBtn.textContent = "Hide Review";
-          } else {
+            const title = document.createElement("h4");
+            title.textContent = `${record.school} vs ${record.opponent}`;
+
+            const meta = document.createElement("div");
+            meta.className = "small";
+            meta.textContent =
+              `Date: ${record.date} | Home: ${record.home_team} | Away: ${record.away_team}`;
+
+            const boxscore = buildDetailLine("Boxscore", record.boxscore_url);
+            const pdf = buildDetailLine("PDF", record.pdf_url);
+            const yearLine = buildDetailLine("Year", record.year);
+
+            const actionRow = document.createElement("div");
+            actionRow.className = "action-row";
+
+            const parseBtn = document.createElement("button");
+            parseBtn.textContent = "Parse Game";
+
+            const reviewBtn = document.createElement("a");
+            reviewBtn.className = "link-button";
             reviewBtn.textContent = "Open Review";
+            reviewBtn.href = "#";
+            reviewBtn.setAttribute("aria-disabled", "true");
+
+            // NEW: HITL Button
+            const hitlBtn = document.createElement("button");
+            hitlBtn.textContent = "HITL Review";
+            hitlBtn.style.background = "#7ca55a"; // Green theme
+            hitlBtn.disabled = true; // Disabled until parsing succeeds
+
+            const excelLink = document.createElement("a");
+            excelLink.className = "download-link";
+            excelLink.textContent = "Download Excel";
+            excelLink.href = "#";
+            excelLink.target = "_blank";
+            excelLink.rel = "noopener noreferrer";
+            excelLink.setAttribute("aria-disabled", "true");
+
+            actionRow.appendChild(parseBtn);
+            actionRow.appendChild(reviewBtn);
+            actionRow.appendChild(hitlBtn);
+            actionRow.appendChild(excelLink);
+
+            const output = document.createElement("div");
+            output.className = "small output";
+
+            const reviewWrap = document.createElement("div");
+            reviewWrap.className = "review-wrap";
+
+            const reviewGrid = document.createElement("div");
+            reviewGrid.className = "review-grid";
+
+            // PDF Panel
+            const pdfPanel = document.createElement("div");
+            pdfPanel.className = "review-panel";
+            const pdfPanelTitle = document.createElement("h5");
+            pdfPanelTitle.textContent = "Original PDF";
+            const reviewFrame = document.createElement("iframe");
+            reviewFrame.className = "review-frame";
+            pdfPanel.appendChild(pdfPanelTitle);
+            pdfPanel.appendChild(reviewFrame);
+
+            // Table Panel
+            const tablePanel = document.createElement("div");
+            tablePanel.className = "review-panel";
+            const tablePanelTitle = document.createElement("h5");
+            tablePanelTitle.textContent = "Parsed Spreadsheet Preview";
+            const tableHost = document.createElement("div");
+            tableHost.className = "review-empty";
+            tableHost.textContent = "Run the parser to load preview rows.";
+            tablePanel.appendChild(tablePanelTitle);
+            tablePanel.appendChild(tableHost);
+
+            reviewGrid.appendChild(pdfPanel);
+            reviewGrid.appendChild(tablePanel);
+            reviewWrap.appendChild(reviewGrid);
+
+            // Variables to store data returned from the parser for this specific card
+            let currentRows = [];
+            let currentCols = [];
+            let currentFilename = "";
+
+            parseBtn.addEventListener("click", async () => {
+              try {
+                parseBtn.disabled = true;
+                output.className = "small output";
+                output.textContent = "Parsing PDF and preparing review view...";
+
+                const resp = await fetch("/api/parse-pdf", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ record })
+                });
+
+                const data = await resp.json();
+
+                if (!resp.ok || !data.ok) {
+                  const detail = data.detail ? ` (${data.detail})` : "";
+                  throw new Error((data.error || "Failed to parse PDF") + detail);
+                }
+
+                // Store data for HITL use
+                currentRows = normalizeRows(data);
+                currentCols = normalizeColumns(data, currentRows);
+                currentFilename = data.filename;
+
+                // Update UI
+                const pdfPreviewUrl = data.pdf_preview_url || data.preview_url || record.pdf_url || "";
+                if (pdfPreviewUrl) reviewFrame.src = pdfPreviewUrl;
+
+                if (data.excel_download_url) {
+                  excelLink.href = data.excel_download_url;
+                  excelLink.setAttribute("aria-disabled", "false");
+                }
+
+                // Enable action buttons
+                reviewBtn.setAttribute("aria-disabled", "false");
+                hitlBtn.disabled = false;
+
+                tableHost.innerHTML = "";
+                tableHost.className = "";
+                tableHost.appendChild(buildReviewTable(currentCols, currentRows));
+
+                reviewWrap.classList.add("open");
+                reviewBtn.textContent = "Hide Review";
+
+                output.className = "small output success-text";
+                output.textContent = `Parsed successfully: ${data.filename || "Excel output ready"}`;
+
+              } catch (err) {
+                output.className = "small output error-text";
+                output.textContent = `Error: ${err.message}`;
+              } finally {
+                parseBtn.disabled = false;
+              }
+            });
+
+            // HITL Button Event - Opens the modal and passes local variables
+            hitlBtn.addEventListener("click", () => {
+              if (typeof openHITL === "function") {
+                openHITL(currentRows, currentCols, currentFilename);
+              } else {
+                console.error("openHITL function not found. Make sure you added the HITL logic script.");
+              }
+            });
+
+            reviewBtn.addEventListener("click", (event) => {
+              event.preventDefault();
+              if (reviewBtn.getAttribute("aria-disabled") === "true") return;
+              reviewWrap.classList.toggle("open");
+              reviewBtn.textContent = reviewWrap.classList.contains("open") ? "Hide Review" : "Open Review";
+            });
+
+            excelLink.addEventListener("click", (event) => {
+              if (excelLink.getAttribute("aria-disabled") === "true") event.preventDefault();
+            });
+
+            card.appendChild(title);
+            card.appendChild(meta);
+            card.appendChild(yearLine);
+            card.appendChild(boxscore);
+            card.appendChild(pdf);
+            card.appendChild(actionRow);
+            card.appendChild(output);
+            card.appendChild(reviewWrap);
+
+            resultsEl.appendChild(card);
           }
-        });
-
-        excelLink.addEventListener("click", (event) => {
-          /*
-            Prevent clicking the Excel download link before it has been activated.
-          */
-          if (excelLink.getAttribute("aria-disabled") === "true") {
-            event.preventDefault();
-          }
-        });
-
-        card.appendChild(title);
-        card.appendChild(meta);
-        card.appendChild(yearLine);
-        card.appendChild(boxscore);
-        card.appendChild(pdf);
-        card.appendChild(actionRow);
-        card.appendChild(output);
-        card.appendChild(reviewWrap);
-
-        resultsEl.appendChild(card);
-      }
-    }
+        }
 
     /* ------------------------------------------------------------
        Discovery flow
@@ -887,7 +948,153 @@
     runBtn.addEventListener("click", runDiscovery);
     loadSchools();
 
+    let currentHITLRows = [];
+    let currentHITLCols = [];
+    let currentFilename = "";
+    let hitlIndex = 0;
+    let hitlBatchIndex = 0;
+
+    function openHITL(rows, columns, filename) {
+        console.log("Opening HITL for:", filename);
+        currentHITLRows = rows;
+        currentFilename = filename;
+        
+        // Filter out metadata
+        currentHITLCols = columns.filter(c => 
+            !['Raw Text', 'HASH', 'play #', 'HUMAN VERIFIED?'].includes(c)
+        );
+        
+        // Resume Logic: Find first play not marked 'Yes'
+        hitlIndex = currentHITLRows.findIndex(r => r['HUMAN VERIFIED?'] !== 'Yes');
+        if (hitlIndex === -1) {
+            if(!confirm("All rows verified. Restart from the beginning?")) return;
+            hitlIndex = 0;
+        }
+
+        hitlBatchIndex = 0;
+        document.getElementById('hitl-modal').classList.add('active');
+        renderHITLRow();
+    }
+
+    function renderHITLRow() {
+        const row = currentHITLRows[hitlIndex];
+        const container = document.getElementById('hitl-fields');
+        const rawTextEl = document.getElementById('hitl-raw-text');
+        const progressEl = document.getElementById('hitl-progress');
+
+        // Calculate Batches
+        const totalCols = currentHITLCols.length;
+        const batchSize = Math.ceil(totalCols / 3);
+        const start = hitlBatchIndex * batchSize;
+        const end = Math.min(start + batchSize, totalCols);
+        const activeBatchCols = currentHITLCols.slice(start, end);
+
+        // Update UI Progress
+        const status = row['HUMAN VERIFIED?'] === 'Yes' ? '✅' : '❌';
+        progressEl.innerHTML = `Row ${hitlIndex + 1}/${currentHITLRows.length} ${status}<br><b>Batch ${hitlBatchIndex + 1}/3</b>`;
+        rawTextEl.textContent = row['Raw Text'] || "No raw text.";
+        
+        container.innerHTML = '';
+
+        // If this batch is empty (can happen if total features < 3), skip it
+        if (activeBatchCols.length === 0) {
+            console.log("Empty batch, auto-advancing...");
+            handleVerifyClick(); 
+            return;
+        }
+
+        activeBatchCols.forEach(col => {
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'hitl-row';
+            rowDiv.innerHTML = `
+                <div class="hitl-label">${col}</div>
+                <input class="hitl-input" value="${row[col] ?? ''}" data-col="${col}">
+            `;
+            container.appendChild(rowDiv);
+        });
+    }
+
+    // Logic for the Green Checkmark
+    async function handleVerifyClick() {
+        console.log(`Verifying Row ${hitlIndex}, Batch ${hitlBatchIndex}`);
+
+        // 1. Save data from current visible inputs
+        const inputs = document.querySelectorAll('.hitl-input');
+        inputs.forEach(input => {
+            currentHITLRows[hitlIndex][input.dataset.col] = input.value;
+        });
+
+        // 2. Advance Batch
+        hitlBatchIndex++;
+
+        // 3. If we finished Batch 3, move to next row
+        if (hitlBatchIndex >= 3) {
+            currentHITLRows[hitlIndex]['HUMAN VERIFIED?'] = 'Yes'; // Auto-verify
+            hitlBatchIndex = 0;
+            hitlIndex++;
+        }
+
+        // 4. Update UI or Finish
+        if (hitlIndex < currentHITLRows.length) {
+            renderHITLRow();
+        } else {
+            console.log("Final Row Reached. Saving...");
+            await finishHITL();
+        }
+    }
+
+    // Attach the listener once
+    document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('hitl-verify-btn');
+        if (btn) {
+            btn.addEventListener('click', handleVerifyClick);
+        }
+    });
+
+    async function finishHITL(silent = false) {
+        try {
+            const resp = await fetch("/api/update-excel", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    filename: currentFilename,
+                    rows: currentHITLRows
+                })
+            });
+            const result = await resp.json();
+            if (!silent && result.ok) {
+                alert("Success! Changes saved to Excel.");
+                document.getElementById('hitl-modal').classList.remove('active');
+            }
+        } catch (err) {
+            console.error("Save failed:", err);
+        }
+    }
+
+    // Exit logic
+    async function closeHITL() {
+        await finishHITL(true); // Auto-save on exit
+        document.getElementById('hitl-modal').classList.remove('active');
+    }
+
   </script>
+
+  <div id="hitl-modal" class="modal-overlay">
+    <div class="hitl-container">
+      <button class="close-modal" onclick="closeHITL()">✕ Exit Review</button>
+      <div id="hitl-progress" class="hitl-progress">Row 0 of 0</div>
+      
+      <div id="hitl-raw-text" class="hitl-raw-text">
+        </div>
+
+      <div class="hitl-edit-header">Click to edit</div>
+
+      <div id="hitl-fields" class="hitl-grid">
+        </div>
+
+      <button id="hitl-verify-btn" class="hitl-check-btn">✔</button>
+    </div>
+  </div>
 
 </body>
 </html>

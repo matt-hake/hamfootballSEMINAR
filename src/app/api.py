@@ -872,6 +872,39 @@ def api_parse_pdf():
     except Exception as e:
         return handle_known_exception(e)
 
+@app.post("/api/update-excel")
+def api_update_excel():
+    payload = request.get_json(silent=True) or {}
+    filename = payload.get("filename")
+    rows = payload.get("rows")
+
+    if not filename or not rows:
+        return make_error_response("Missing 'filename' or 'rows'.", status_code=400)
+
+    try:
+        safe_name = secure_filename(filename)
+        excel_path = EXPORTS_DIR / safe_name
+        
+        if not excel_path.exists():
+            return make_error_response("File not found.", status_code=404)
+
+        # 1. Load the original file just to get the column order
+        original_df = pd.read_excel(excel_path)
+        original_cols = list(original_df.columns)
+
+        # 2. Create the new DF and reorder its columns to match the original
+        new_df = pd.DataFrame(rows)
+        
+        # Ensure we only use columns that actually exist in the new data
+        valid_cols = [c for c in original_cols if c in new_df.columns]
+        new_df = new_df[valid_cols]
+
+        new_df.to_excel(excel_path, index=False)
+
+        return jsonify({"ok": True, "message": "Updated with original column order preserved."})
+
+    except Exception as e:
+        return handle_known_exception(e)
 
 @app.get("/exports/<path:filename>")
 def serve_export(filename: str):
