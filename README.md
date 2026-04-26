@@ -140,16 +140,20 @@ d. Look at the line above the yellow text, there will be a line that says someth
 ## 3. Navigating the UI
 
 a. At the top of the page, select the years you would like scrape.
+<img width="1438" height="732" alt="Screenshot 2026-04-25 at 9 57 37 AM" src="https://github.com/user-attachments/assets/b164c77f-061a-4a7e-b540-5ee0dd767723" />
 
-b. Select the school(s) you are interested in
+b. Select the school(s) you are interested in and click "find games", the scraper will now find all requested games (this may take 10-20 seconds)
+<img width="1438" height="732" alt="Screenshot 2026-04-25 at 9 57 37 AM" src="https://github.com/user-attachments/assets/de511a8f-10ec-4af1-9dcc-b63512122259" />
 
-c. click "find games", the scraper will now find all requested games (this may take 10-20 seconds)
-
-d. Under "Discovered Games", find the game(s) you are interested in and click "Parse Game" (this may take a few minutes)
+c. Scroll down, Under "Discovered Games", find the game(s) you are interested in and click "Parse Game" (this may take a few minutes)
 **WARNING: Do not try to parse multiple games at once!**
+<img width="1389" height="693" alt="Screenshot 2026-04-25 at 10 03 49 AM" src="https://github.com/user-attachments/assets/4558e983-65b2-4b1a-b26f-a02a91de68da" />
 
-e. You can then review the spreadsheet in the browser or click "Download Excel" to make edits
+d. You can then review the spreadsheet in the browser or click "Download Excel" to make edits
+<img width="1440" height="729" alt="Screenshot 2026-04-25 at 10 09 42 AM" src="https://github.com/user-attachments/assets/83faafd0-5f7b-4df2-8758-9c4d6f004c82" />
 
-f. Notice the first column of the spreadsheet "HUMAN VERIFIED", once a row is verified, you can click on the cell in the first column and click "yes".
 
-g. Once you are finished click back into the terminal and hit ctrl + c to close the vitrual environment
+e. Notice the first column of the spreadsheet "HUMAN VERIFIED", once a row is verified, you can click on the cell in the first column and click "yes".
+<img width="1303" height="795" alt="Screenshot 2026-04-25 at 10 12 56 AM" src="https://github.com/user-attachments/assets/2dccbc62-cac6-478d-bdf9-07db0cd19248" />
+
+f. **Once you are finished click back into the terminal (in VSCode) and hit ctrl + c to close the vitrual environment**
