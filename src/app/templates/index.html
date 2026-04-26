@@ -4,7 +4,7 @@
 
   <!-- Standard metadata -->
   <meta charset="utf-8" />
-  <title>NESCAC Parser Pipeline Demo</title> <!-- /* NEW AS OF 4/1 */ changed title to reflect parser workflow -->
+  <title>NESCAC Parser Pipeline Demo</title>
 
   <!-- Ensures proper scaling on mobile devices -->
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -13,11 +13,14 @@
 
     /* ------------------------------------------------------------
        Page layout styling
+
+       CITE: ChatGPT was used to procure a template for UI demos and 
+       to streamline the documentation process. 
        ------------------------------------------------------------ */
 
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      max-width: 1400px; /* NEW AS OF 4/1 */ /* widened page a bit to better support side-by-side review */
+      max-width: 1400px;
       margin: 32px auto;
       padding: 0 20px;
       background: #f7f7f7;
@@ -31,7 +34,6 @@
 
     /* ------------------------------------------------------------
        Card container styling
-       Used for each major section of the UI
        ------------------------------------------------------------ */
 
     .card {
@@ -43,7 +45,7 @@
       box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     }
 
-    /* Horizontal row layout for form controls */
+    /* Row layout for grouped controls near the top of the page */
     .row {
       display: flex;
       gap: 20px;
@@ -52,7 +54,7 @@
       margin-bottom: 20px;
     }
 
-    /* Grid layout for the list of school checkboxes */
+    /* Responsive checkbox grid for school selection */
     .schools-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -61,7 +63,7 @@
       margin-bottom: 20px;
     }
 
-    /* Styling for each checkbox container */
+    /* Styling for each school checkbox "card" */
     label.checkbox {
       display: flex;
       align-items: center;
@@ -72,7 +74,7 @@
       padding: 10px 12px;
     }
 
-    /* Primary button styling */
+    /* Main button style */
     button {
       background: #222;
       color: white;
@@ -83,25 +85,25 @@
       cursor: pointer;
     }
 
-    /* Disabled button appearance */
+    /* Disabled button state */
     button:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
 
-    /* Subtle muted text */
+    /* Muted helper text */
     .muted {
       color: #555;
     }
 
-    /* Grid layout for the result cards */
+    /* Vertical list of discovered game cards */
     .result-list {
       display: grid;
       gap: 12px;
       margin-top: 16px;
     }
 
-    /* Individual result card */
+    /* Individual discovered game card */
     .result-item {
       border: 1px solid #ddd;
       border-radius: 12px;
@@ -113,19 +115,19 @@
       margin: 0 0 8px 0;
     }
 
-    /* Smaller metadata text */
+    /* Smaller text used for metadata and status within cards */
     .small {
       font-size: 0.95rem;
       color: #555;
       word-break: break-word;
     }
 
-    /* Allows multi-line status messages */
+    /* Preserve line breaks in status text */
     .status {
       white-space: pre-wrap;
     }
 
-    /* Layout for action buttons */
+    /* Container for action buttons/links inside each result card */
     .action-row {
       display: flex;
       gap: 10px;
@@ -134,7 +136,7 @@
       align-items: center;
     }
 
-    /* Button-style links */
+    /* Shared button-like styling for anchors */
     .link-button,
     .download-link {
       display: inline-block;
@@ -147,78 +149,64 @@
       font-weight: 600;
     }
 
-    /* Disabled link appearance */
+    /* Visual disabled state for anchors since <a> has no native disabled attribute */
     .link-button[aria-disabled="true"],
-    .download-link[aria-disabled="true"] { /* NEW AS OF 4/1 */ /* made disabled styling apply to both link types */
+    .download-link[aria-disabled="true"] {
       opacity: 0.5;
       pointer-events: none;
     }
 
+    /* Output/status text area under each game card */
     .output {
       margin-top: 10px;
     }
 
-    /* Error text styling */
+    /* Error styling */
     .error-text {
       color: #9f1d1d;
       font-weight: 600;
     }
 
-    /* Success text styling */
+    /* Success styling */
     .success-text {
       color: #166534;
       font-weight: 600;
     }
 
-    /* Wrapper for embedded PDF preview */
-    .preview-wrap {
+    /* Review panel is hidden until parsing finishes */
+    .review-wrap {
       margin-top: 14px;
       display: none;
     }
 
-    /* Makes preview visible when opened */
-    .preview-wrap.open {
+    /* Once "open" class is added in JavaScript, show the review section */
+    .review-wrap.open {
       display: block;
     }
 
-    /* Embedded PDF viewer frame */
-    .preview-frame {
-      width: 100%;
-      height: 700px;
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      background: white;
-    }
-
-    .review-wrap { /* NEW AS OF 4/1 */ /* new container for human-in-the-loop side-by-side review */
-      margin-top: 14px;
-      display: none;
-    }
-
-    .review-wrap.open { /* NEW AS OF 4/1 */
-      display: block;
-    }
-
-    .review-grid { /* NEW AS OF 4/1 */ /* side-by-side panel layout */
+    /* Side-by-side layout: PDF on one side, parsed table on the other */
+    .review-grid {
       display: grid;
       grid-template-columns: 1.1fr 1fr;
       gap: 16px;
       align-items: start;
     }
 
-    .review-panel { /* NEW AS OF 4/1 */
+    /* Panel styling for each side of the review area */
+    .review-panel {
       background: white;
       border: 1px solid #ddd;
       border-radius: 12px;
       padding: 12px;
     }
 
-    .review-panel h5 { /* NEW AS OF 4/1 */
+    .review-panel h5 {
       margin: 0 0 10px 0;
       font-size: 1rem;
     }
 
-    .review-frame { /* NEW AS OF 4/1 */ /* PDF frame inside review panel */
+    /* Embedded PDF frame */
+    .review-frame {
       width: 100%;
       height: 700px;
       border: 1px solid #ddd;
@@ -226,7 +214,8 @@
       background: white;
     }
 
-    .table-wrap { /* NEW AS OF 4/1 */ /* scrollable spreadsheet preview area */
+    /* Scrollable wrapper for preview table */
+    .table-wrap {
       max-height: 700px;
       overflow: auto;
       border: 1px solid #ddd;
@@ -234,55 +223,173 @@
       background: white;
     }
 
-    .review-table { /* NEW AS OF 4/1 */
+    /* Table used to preview parsed spreadsheet rows */
+    .review-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.9rem;
     }
 
     .review-table th,
-    .review-table td { /* NEW AS OF 4/1 */
+    .review-table td {
       border-bottom: 1px solid #e5e5e5;
       padding: 8px 10px;
       text-align: left;
       vertical-align: top;
     }
 
-    .review-table th { /* NEW AS OF 4/1 */
+    /* Sticky table header so column names remain visible while scrolling */
+    .review-table th {
       position: sticky;
       top: 0;
       background: #f7f7f7;
       z-index: 1;
     }
 
-    .review-empty { /* NEW AS OF 4/1 */
+    /* Placeholder text shown when no parsed rows are available yet */
+    .review-empty {
       padding: 12px;
       color: #555;
     }
+
+    /* ------------------------------------------------------------
+   HITL Modal Styling
+   ------------------------------------------------------------ */
+
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-overlay.active { display: flex; }
+
+.hitl-container {
+  background: #d1e3f8; /* Light blue background from screenshot */
+  width: 90%;
+  max-width: 800px;
+  padding: 40px;
+  border-radius: 8px;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  min-height: 600px; /* Keeps the green button in the same spot */
+  display: flex;
+  flex-direction: column;
+}
+
+.hitl-raw-text {
+  font-size: 1.5rem;
+  margin-bottom: 30px;
+  line-height: 1.4;
+  color: #000;
+  min-height: 80px;
+}
+
+.hitl-edit-header {
+  text-align: center;
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.hitl-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-width: 400px;
+  flex-grow: 1;
+}
+
+.hitl-row {
+  display: flex;
+  align-items: stretch;
+  gap: 15px;
+}
+
+.hitl-label {
+  background: #6d93d6; /* The darker blue for buttons */
+  color: #000;
+  width: 140px;
+  padding: 12px;
+  text-align: center;
+  font-weight: bold;
+  border: 1px solid #4a6fa5;
+  border-radius: 4px;
+}
+
+.hitl-input {
+  flex-grow: 1;
+  background: #f4f4f4;
+  border: 1px solid #ccc;
+  padding: 12px;
+  font-size: 1.2rem;
+  text-align: center;
+  border-radius: 4px;
+}
+
+.hitl-check-btn {
+  position: absolute;
+  bottom: 40px;
+  right: 40px;
+  background: #7ca55a; /* Green from screenshot */
+  width: 100px;
+  height: 80px;
+  border-radius: 4px;
+  border: 1px solid #5d7c43;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: #333;
+}
+
+.hitl-check-btn:hover { background: #8bb866; }
+
+.hitl-progress {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.close-modal {
+  position: absolute;
+  top: 10px;
+  left: 15px;
+  cursor: pointer;
+  font-size: 1.5rem;
+  background: none;
+  color: #333;
+}
 
   </style>
 </head>
 
 <body>
 
-  <!-- Page title -->
-  <h1>NESCAC Parser Pipeline Demo</h1> <!-- /* NEW AS OF 4/1 */ changed heading to reflect parser-based workflow -->
+  <h1>NESCAC Parser Pipeline Demo</h1>
 
-  <!-- ------------------------------------------------------------
-       Input Card
-       Allows the user to configure and run the PDF discovery job
-       ------------------------------------------------------------ -->
   <div class="card">
 
     <div class="row">
 
-      <!-- Year selection -->
+      <!-- NEW: start year replaces single year input -->
       <label>
-        Year:
-        <input id="year" type="number" value="2025" />
+        Start Year:
+        <input id="start-year" type="number" value="2021" />
       </label>
 
-      <!-- Optional link limit to prevent excessive scraping in demo -->
+      <!-- NEW: end year replaces single year input -->
+      <label>
+        End Year:
+        <input id="end-year" type="number" value="2025" />
+      </label>
+
       <label>
         Limit links (demo safety):
         <input id="limit-links" type="number" value="0" min="0" />
@@ -290,34 +397,31 @@
 
     </div>
 
+    <p class="muted">
+      Choose a year range to scrape multiple seasons at once.
+    </p>
+
     <h2>Schools</h2>
     <p class="muted">If none selected, runs all schools.</p>
 
-    <!-- Container where the API will dynamically insert school checkboxes -->
+    <!-- This container is populated dynamically by JavaScript after /api/schools loads -->
     <div id="schools-container" class="schools-grid">
       <div class="muted">Loading schools...</div>
     </div>
 
-    <!-- Button that triggers the PDF discovery API -->
-    <button id="run-btn">Find Games</button> <!-- /* NEW AS OF 4/1 */ renamed button because PDFs are no longer the final product -->
+    <button id="run-btn">Find Games</button>
 
   </div>
 
-  <!-- ------------------------------------------------------------
-       Status Card
-       Displays current system status messages
-       ------------------------------------------------------------ -->
   <div class="card">
     <h2>Status</h2>
     <div id="status" class="status">Idle.</div>
   </div>
 
-  <!-- ------------------------------------------------------------
-       Results Card
-       Displays discovered game records, each of which can be parsed
-       ------------------------------------------------------------ -->
   <div class="card">
-    <h2>Discovered Games</h2> <!-- /* NEW AS OF 4/1 */ changed results heading from PDFs to games -->
+    <h2>Discovered Games</h2>
+
+    <!-- JavaScript replaces this once results are returned -->
     <div id="results" class="result-list">
       <div class="muted">No results yet.</div>
     </div>
@@ -327,43 +431,50 @@
 
     /* ------------------------------------------------------------
        DOM references
-       These connect JavaScript to elements in the HTML page
        ------------------------------------------------------------ */
 
+    /* Main containers and controls used throughout the script */
     const schoolsContainer = document.getElementById("schools-container");
     const runBtn = document.getElementById("run-btn");
     const statusEl = document.getElementById("status");
     const resultsEl = document.getElementById("results");
-    const yearInput = document.getElementById("year");
+
+    /* NEW: start/end year inputs */
+    const startYearInput = document.getElementById("start-year");
+    const endYearInput = document.getElementById("end-year");
+
+    /* Optional backend safety limit for discovery */
     const limitLinksInput = document.getElementById("limit-links");
 
-
     /* ------------------------------------------------------------
-       Status helper
-       Updates the status text on the UI
+       Small helpers
        ------------------------------------------------------------ */
 
     function setStatus(message) {
+      /*
+        Update the main status panel with a user-facing message.
+        This keeps the user informed about what the UI is currently doing.
+      */
       statusEl.textContent = message;
     }
 
-
-    /* ------------------------------------------------------------
-       Collect selected schools from checkboxes
-       Returns array of selected school names
-       ------------------------------------------------------------ */
-
     function getSelectedSchools() {
+      /*
+        Read all checked school checkboxes and return their values
+        as a plain JavaScript array of school names.
+      */
       const checked = document.querySelectorAll('input[name="schools"]:checked');
       return Array.from(checked).map((el) => el.value);
     }
 
-
-    /* ------------------------------------------------------------
-       Escape HTML to prevent injection issues when rendering text
-       ------------------------------------------------------------ */
-
     function escapeHtml(value) {
+      /*
+        Escape user-visible text before inserting it into innerHTML.
+
+        This is important whenever a string might contain special
+        characters like < or >, because those could otherwise be
+        interpreted as HTML markup instead of plain text.
+      */
       return String(value ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
@@ -372,13 +483,15 @@
         .replaceAll("'", "&#39;");
     }
 
-
     /* ------------------------------------------------------------
-       Render school checkboxes after fetching from API
+       School loading / rendering
        ------------------------------------------------------------ */
 
     function renderSchools(schools) {
-
+      /*
+        Fill the school checkbox grid using the list returned
+        by the backend /api/schools endpoint.
+      */
       schoolsContainer.innerHTML = "";
 
       if (!schools || schools.length === 0) {
@@ -387,7 +500,10 @@
       }
 
       for (const school of schools) {
-
+        /*
+          Build each checkbox row manually so the page does not rely
+          on raw HTML string concatenation for this section.
+        */
         const label = document.createElement("label");
         label.className = "checkbox";
 
@@ -406,19 +522,17 @@
       }
     }
 
-
-    /* ------------------------------------------------------------
-       Load list of schools from the backend API
-       Endpoint: /api/schools
-       ------------------------------------------------------------ */
-
     async function loadSchools() {
-      try {
+      /*
+        Load valid school names and suggested year defaults from the backend.
 
+        The backend response also provides suggested_start_year and
+        suggested_end_year so the frontend stays aligned with the API's
+        notion of a sensible multi-year range.
+      */
+      try {
         setStatus("Loading schools...");
 
-        /* This is where we fetch schools for use by html*/
-        
         const resp = await fetch("/api/schools");
         const data = await resp.json();
 
@@ -428,14 +542,23 @@
 
         renderSchools(data.schools);
 
-        if (data.year) {
-          yearInput.value = data.year;
+        /* NEW:
+           use backend-provided defaults for multi-year mode */
+        if (data.suggested_start_year) {
+          startYearInput.value = data.suggested_start_year;
+        }
+
+        if (data.suggested_end_year) {
+          endYearInput.value = data.suggested_end_year;
         }
 
         setStatus("Schools loaded.");
 
       } catch (err) {
-
+        /*
+          We use innerHTML here because the message includes a small
+          wrapper element. The actual error text is escaped first.
+        */
         schoolsContainer.innerHTML =
           `<div class="muted">Failed to load schools: ${escapeHtml(err.message)}</div>`;
 
@@ -443,40 +566,63 @@
       }
     }
 
-
     /* ------------------------------------------------------------
-       Helper to build metadata lines in result cards
+       Result formatting helpers
        ------------------------------------------------------------ */
 
     function buildDetailLine(label, value) {
+      /*
+        Build a small metadata line like:
+        "Boxscore: https://..."
+      */
       const div = document.createElement("div");
       div.className = "small";
       div.textContent = `${label}: ${value ?? ""}`;
       return div;
     }
 
+    function normalizeRows(data) {
+      /*
+        Accept multiple possible backend field names for preview rows.
 
-    function normalizeRows(data) { /* NEW AS OF 4/1 */ /* normalizes possible row payload names returned by parser endpoint */
+        This makes the frontend more tolerant if the backend response
+        shape changes slightly, for example:
+        - rows
+        - table_rows
+        - preview_rows
+      */
       return data.rows || data.table_rows || data.preview_rows || [];
     }
 
-
-    function normalizeColumns(data, rows) { /* NEW AS OF 4/1 */ /* chooses explicit columns if provided, otherwise infers from first row */
+    function normalizeColumns(data, rows) {
+      /*
+        Prefer explicit column definitions from the backend.
+        If they are not present, infer columns from the first row object.
+      */
       if (Array.isArray(data.columns) && data.columns.length > 0) {
         return data.columns;
       }
+
       if (rows.length > 0 && typeof rows[0] === "object" && rows[0] !== null) {
         return Object.keys(rows[0]);
       }
+
       return [];
     }
 
-
-    function buildReviewTable(columns, rows) { /* NEW AS OF 4/1 */ /* builds HTML table for parsed spreadsheet preview */
+    function buildReviewTable(columns, rows) {
+      /*
+        Build the parsed spreadsheet preview table shown on the right side
+        of the review interface.
+      */
       const tableWrap = document.createElement("div");
       tableWrap.className = "table-wrap";
 
       if (!rows || rows.length === 0) {
+        /*
+          If the parser returned no preview data, show a clear placeholder
+          instead of rendering an empty table.
+        */
         const empty = document.createElement("div");
         empty.className = "review-empty";
         empty.textContent = "No parsed rows were returned by the parser.";
@@ -506,6 +652,11 @@
 
         for (const column of columns) {
           const td = document.createElement("td");
+
+          /*
+            Optional chaining (row?.[column]) safely handles cases where
+            row is null/undefined without throwing an error.
+          */
           td.textContent = row?.[column] ?? "";
           tr.appendChild(td);
         }
@@ -519,220 +670,237 @@
       return tableWrap;
     }
 
-
     /* ------------------------------------------------------------
-       Render discovered records returned from API
-
-       Each card now supports parsing and side-by-side review rather
-       than just preparing a PDF for display.
+       Result rendering
        ------------------------------------------------------------ */
 
-    function renderResults(records) {
+       function renderResults(records) {
+          /*
+            Render one result card per discovered game/PDF record.
+          */
+          resultsEl.innerHTML = "";
 
-      resultsEl.innerHTML = "";
-
-      if (!records || records.length === 0) {
-        resultsEl.innerHTML = '<div class="muted">No game records found.</div>'; /* NEW AS OF 4/1 */ /* updated empty-state wording */
-        return;
-      }
-
-      for (const record of records) {
-
-        const card = document.createElement("div");
-        card.className = "result-item";
-
-        const title = document.createElement("h4");
-        title.textContent = `${record.school} vs ${record.opponent}`;
-
-        const meta = document.createElement("div");
-        meta.className = "small";
-        meta.textContent =
-          `Date: ${record.date} | Home: ${record.home_team} | Away: ${record.away_team}`;
-
-        const boxscore = buildDetailLine("Boxscore", record.boxscore_url);
-        const pdf = buildDetailLine("PDF", record.pdf_url);
-
-        const actionRow = document.createElement("div");
-        actionRow.className = "action-row";
-
-        const parseBtn = document.createElement("button"); /* NEW AS OF 4/1 */ /* replaced old prepare button with parser button */
-        parseBtn.textContent = "Parse Game"; /* NEW AS OF 4/1 */
-
-        const reviewBtn = document.createElement("a"); /* NEW AS OF 4/1 */ /* new review toggle control */
-        reviewBtn.className = "link-button";
-        reviewBtn.textContent = "Open Review";
-        reviewBtn.href = "#";
-        reviewBtn.setAttribute("aria-disabled", "true");
-
-        const excelLink = document.createElement("a"); /* NEW AS OF 4/1 */ /* new final output link for parsed spreadsheet */
-        excelLink.className = "download-link";
-        excelLink.textContent = "Download Excel";
-        excelLink.href = "#";
-        excelLink.target = "_blank";
-        excelLink.rel = "noopener noreferrer";
-        excelLink.setAttribute("aria-disabled", "true");
-
-        actionRow.appendChild(parseBtn); /* NEW AS OF 4/1 */
-        actionRow.appendChild(reviewBtn); /* NEW AS OF 4/1 */
-        actionRow.appendChild(excelLink); /* NEW AS OF 4/1 */
-
-        const output = document.createElement("div");
-        output.className = "small output";
-
-        const reviewWrap = document.createElement("div"); /* NEW AS OF 4/1 */ /* side-by-side review container */
-        reviewWrap.className = "review-wrap";
-
-        const reviewGrid = document.createElement("div"); /* NEW AS OF 4/1 */
-        reviewGrid.className = "review-grid";
-
-        const pdfPanel = document.createElement("div"); /* NEW AS OF 4/1 */
-        pdfPanel.className = "review-panel";
-
-        const pdfPanelTitle = document.createElement("h5"); /* NEW AS OF 4/1 */
-        pdfPanelTitle.textContent = "Original PDF";
-
-        const reviewFrame = document.createElement("iframe"); /* NEW AS OF 4/1 */ /* iframe for the source PDF */
-        reviewFrame.className = "review-frame";
-        reviewFrame.title = `PDF review for ${record.school} vs ${record.opponent}`;
-
-        pdfPanel.appendChild(pdfPanelTitle);
-        pdfPanel.appendChild(reviewFrame);
-
-        const tablePanel = document.createElement("div"); /* NEW AS OF 4/1 */
-        tablePanel.className = "review-panel";
-
-        const tablePanelTitle = document.createElement("h5"); /* NEW AS OF 4/1 */
-        tablePanelTitle.textContent = "Parsed Spreadsheet Preview";
-
-        const tableHost = document.createElement("div"); /* NEW AS OF 4/1 */ /* where parsed table preview gets inserted */
-        tableHost.className = "review-empty";
-        tableHost.textContent = "Run the parser to load preview rows.";
-
-        tablePanel.appendChild(tablePanelTitle);
-        tablePanel.appendChild(tableHost);
-
-        reviewGrid.appendChild(pdfPanel); /* NEW AS OF 4/1 */
-        reviewGrid.appendChild(tablePanel); /* NEW AS OF 4/1 */
-        reviewWrap.appendChild(reviewGrid); /* NEW AS OF 4/1 */
-
-        parseBtn.addEventListener("click", async () => { /* NEW AS OF 4/1 */ /* parser workflow replaces old /api/download-pdf workflow */
-
-          try {
-
-            parseBtn.disabled = true;
-
-            output.className = "small output";
-            output.textContent = "Parsing PDF and preparing review view..."; /* NEW AS OF 4/1 */
-
-            const resp = await fetch("/api/parse-pdf", { /* NEW AS OF 4/1 */ /* changed endpoint from /api/download-pdf to parser endpoint */
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ record })
-            });
-
-            const data = await resp.json();
-
-            if (!resp.ok || !data.ok) {
-              const detail = data.detail ? ` (${data.detail})` : "";
-              throw new Error((data.error || "Failed to parse PDF") + detail); /* NEW AS OF 4/1 */
-            }
-
-            const pdfPreviewUrl =
-              data.pdf_preview_url ||
-              data.preview_url ||
-              record.pdf_url ||
-              ""; /* NEW AS OF 4/1 */ /* supports a few possible backend field names */
-
-            if (pdfPreviewUrl) {
-              reviewFrame.src = pdfPreviewUrl; /* NEW AS OF 4/1 */ /* populate left-side PDF panel */
-            }
-
-            if (data.excel_download_url) { /* NEW AS OF 4/1 */ /* wire final spreadsheet download */
-              excelLink.href = data.excel_download_url;
-              excelLink.setAttribute("aria-disabled", "false");
-            }
-
-            reviewBtn.setAttribute("aria-disabled", "false"); /* NEW AS OF 4/1 */
-
-            const rows = normalizeRows(data); /* NEW AS OF 4/1 */
-            const columns = normalizeColumns(data, rows); /* NEW AS OF 4/1 */
-
-            tableHost.innerHTML = ""; /* NEW AS OF 4/1 */
-            tableHost.className = ""; /* NEW AS OF 4/1 */
-            tableHost.appendChild(buildReviewTable(columns, rows)); /* NEW AS OF 4/1 */
-
-            reviewWrap.classList.add("open"); /* NEW AS OF 4/1 */ /* open side-by-side review automatically after successful parse */
-
-            output.className = "small output success-text";
-            output.textContent = `Parsed successfully: ${data.filename || "Excel output ready"}`; /* NEW AS OF 4/1 */
-
-          } catch (err) {
-
-            output.className = "small output error-text";
-            output.textContent = `Error: ${err.message}`;
-
-          } finally {
-            parseBtn.disabled = false;
-          }
-        });
-
-        reviewBtn.addEventListener("click", (event) => { /* NEW AS OF 4/1 */ /* toggles review panel visibility */
-          event.preventDefault();
-
-          if (reviewBtn.getAttribute("aria-disabled") === "true") {
+          if (!records || records.length === 0) {
+            resultsEl.innerHTML = '<div class="muted">No game records found.</div>';
             return;
           }
 
-          reviewWrap.classList.toggle("open");
+          for (const record of records) {
+            const card = document.createElement("div");
+            card.className = "result-item";
 
-          if (reviewWrap.classList.contains("open")) {
-            reviewBtn.textContent = "Hide Review";
-          } else {
+            const title = document.createElement("h4");
+            title.textContent = `${record.school} vs ${record.opponent}`;
+
+            const meta = document.createElement("div");
+            meta.className = "small";
+            meta.textContent =
+              `Date: ${record.date} | Home: ${record.home_team} | Away: ${record.away_team}`;
+
+            const boxscore = buildDetailLine("Boxscore", record.boxscore_url);
+            const pdf = buildDetailLine("PDF", record.pdf_url);
+            const yearLine = buildDetailLine("Year", record.year);
+
+            const actionRow = document.createElement("div");
+            actionRow.className = "action-row";
+
+            const parseBtn = document.createElement("button");
+            parseBtn.textContent = "Parse Game";
+
+            const reviewBtn = document.createElement("a");
+            reviewBtn.className = "link-button";
             reviewBtn.textContent = "Open Review";
+            reviewBtn.href = "#";
+            reviewBtn.setAttribute("aria-disabled", "true");
+
+            // NEW: HITL Button
+            const hitlBtn = document.createElement("button");
+            hitlBtn.textContent = "HITL Review";
+            hitlBtn.style.background = "#7ca55a"; // Green theme
+            hitlBtn.disabled = true; // Disabled until parsing succeeds
+
+            const excelLink = document.createElement("a");
+            excelLink.className = "download-link";
+            excelLink.textContent = "Download Excel";
+            excelLink.href = "#";
+            excelLink.target = "_blank";
+            excelLink.rel = "noopener noreferrer";
+            excelLink.setAttribute("aria-disabled", "true");
+
+            actionRow.appendChild(parseBtn);
+            actionRow.appendChild(reviewBtn);
+            actionRow.appendChild(hitlBtn);
+            actionRow.appendChild(excelLink);
+
+            const output = document.createElement("div");
+            output.className = "small output";
+
+            const reviewWrap = document.createElement("div");
+            reviewWrap.className = "review-wrap";
+
+            const reviewGrid = document.createElement("div");
+            reviewGrid.className = "review-grid";
+
+            // PDF Panel
+            const pdfPanel = document.createElement("div");
+            pdfPanel.className = "review-panel";
+            const pdfPanelTitle = document.createElement("h5");
+            pdfPanelTitle.textContent = "Original PDF";
+            const reviewFrame = document.createElement("iframe");
+            reviewFrame.className = "review-frame";
+            pdfPanel.appendChild(pdfPanelTitle);
+            pdfPanel.appendChild(reviewFrame);
+
+            // Table Panel
+            const tablePanel = document.createElement("div");
+            tablePanel.className = "review-panel";
+            const tablePanelTitle = document.createElement("h5");
+            tablePanelTitle.textContent = "Parsed Spreadsheet Preview";
+            const tableHost = document.createElement("div");
+            tableHost.className = "review-empty";
+            tableHost.textContent = "Run the parser to load preview rows.";
+            tablePanel.appendChild(tablePanelTitle);
+            tablePanel.appendChild(tableHost);
+
+            reviewGrid.appendChild(pdfPanel);
+            reviewGrid.appendChild(tablePanel);
+            reviewWrap.appendChild(reviewGrid);
+
+            // Variables to store data returned from the parser for this specific card
+            let currentRows = [];
+            let currentCols = [];
+            let currentFilename = "";
+
+            parseBtn.addEventListener("click", async () => {
+              try {
+                parseBtn.disabled = true;
+                output.className = "small output";
+                output.textContent = "Parsing PDF and preparing review view...";
+
+                const resp = await fetch("/api/parse-pdf", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ record })
+                });
+
+                const data = await resp.json();
+
+                if (!resp.ok || !data.ok) {
+                  const detail = data.detail ? ` (${data.detail})` : "";
+                  throw new Error((data.error || "Failed to parse PDF") + detail);
+                }
+
+                // Store data for HITL use
+                currentRows = normalizeRows(data);
+                currentCols = normalizeColumns(data, currentRows);
+                currentFilename = data.filename;
+
+                // Update UI
+                const pdfPreviewUrl = data.pdf_preview_url || data.preview_url || record.pdf_url || "";
+                if (pdfPreviewUrl) reviewFrame.src = pdfPreviewUrl;
+
+                if (data.excel_download_url) {
+                  excelLink.href = data.excel_download_url;
+                  excelLink.setAttribute("aria-disabled", "false");
+                }
+
+                // Enable action buttons
+                reviewBtn.setAttribute("aria-disabled", "false");
+                hitlBtn.disabled = false;
+
+                tableHost.innerHTML = "";
+                tableHost.className = "";
+                tableHost.appendChild(buildReviewTable(currentCols, currentRows));
+
+                reviewWrap.classList.add("open");
+                reviewBtn.textContent = "Hide Review";
+
+                output.className = "small output success-text";
+                output.textContent = `Parsed successfully: ${data.filename || "Excel output ready"}`;
+
+              } catch (err) {
+                output.className = "small output error-text";
+                output.textContent = `Error: ${err.message}`;
+              } finally {
+                parseBtn.disabled = false;
+              }
+            });
+
+            // HITL Button Event - Opens the modal and passes local variables
+            hitlBtn.addEventListener("click", () => {
+              if (typeof openHITL === "function") {
+                openHITL(currentRows, currentCols, currentFilename);
+              } else {
+                console.error("openHITL function not found. Make sure you added the HITL logic script.");
+              }
+            });
+
+            reviewBtn.addEventListener("click", (event) => {
+              event.preventDefault();
+              if (reviewBtn.getAttribute("aria-disabled") === "true") return;
+              reviewWrap.classList.toggle("open");
+              reviewBtn.textContent = reviewWrap.classList.contains("open") ? "Hide Review" : "Open Review";
+            });
+
+            excelLink.addEventListener("click", (event) => {
+              if (excelLink.getAttribute("aria-disabled") === "true") event.preventDefault();
+            });
+
+            card.appendChild(title);
+            card.appendChild(meta);
+            card.appendChild(yearLine);
+            card.appendChild(boxscore);
+            card.appendChild(pdf);
+            card.appendChild(actionRow);
+            card.appendChild(output);
+            card.appendChild(reviewWrap);
+
+            resultsEl.appendChild(card);
           }
-        });
-
-        excelLink.addEventListener("click", (event) => { /* NEW AS OF 4/1 */ /* prevent spreadsheet download before parse is complete */
-          if (excelLink.getAttribute("aria-disabled") === "true") {
-            event.preventDefault();
-          }
-        });
-
-        card.appendChild(title);
-        card.appendChild(meta);
-        card.appendChild(boxscore);
-        card.appendChild(pdf);
-        card.appendChild(actionRow);
-        card.appendChild(output);
-        card.appendChild(reviewWrap); /* NEW AS OF 4/1 */ /* card now contains review UI instead of plain PDF preview */
-
-        resultsEl.appendChild(card);
-      }
-    }
-
+        }
 
     /* ------------------------------------------------------------
-       Run PDF discovery
-       Calls backend API endpoint: /api/find-pdfs
-
-       This still discovers game/PDF records first, but the parser now
-       runs later per record when the user clicks Parse Game.
+       Discovery flow
        ------------------------------------------------------------ */
 
     async function runDiscovery() {
-
+      /*
+        Main "Find Games" workflow:
+        1. Read user input
+        2. Validate year range
+        3. POST to /api/find-pdfs
+        4. Render discovered results
+      */
       try {
-
         runBtn.disabled = true;
-
         resultsEl.innerHTML = "";
 
-        setStatus("Finding games and PDF records..."); /* NEW AS OF 4/1 */ /* status text updated for new workflow */
+        setStatus("Finding games and PDF records across the selected year range...");
 
         const selectedSchools = getSelectedSchools();
 
+        const startYear = Number(startYearInput.value);
+        const endYear = Number(endYearInput.value);
+
+        /*
+          Number(...) converts the input text into numeric form.
+          Number.isInteger(...) ensures the result is a real integer.
+        */
+        if (!Number.isInteger(startYear) || !Number.isInteger(endYear)) {
+          throw new Error("Start Year and End Year must both be valid integers.");
+        }
+
+        if (startYear > endYear) {
+          throw new Error("Start Year cannot be greater than End Year.");
+        }
+
+        /*
+          If no schools are selected, send null so the backend knows
+          to run all schools rather than an empty list.
+        */
         const payload = {
-          year: Number(yearInput.value),
+          start_year: startYear,
+          end_year: endYear,
           schools: selectedSchools.length > 0 ? selectedSchools : null,
           limit_links: Number(limitLinksInput.value || 0)
         };
@@ -740,6 +908,11 @@
         const resp = await fetch("/api/find-pdfs", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+
+          /*
+            JSON.stringify converts the JavaScript object payload into
+            a JSON string suitable for the POST request body.
+          */
           body: JSON.stringify(payload)
         });
 
@@ -752,26 +925,176 @@
 
         renderResults(data.results);
 
-        setStatus(`Found ${data.count} game record(s). Click "Parse Game" to generate Excel output.`); /* NEW AS OF 4/1 */ /* user guidance now reflects parser step */
+        setStatus(
+          `Found ${data.count} game record(s) from ${startYear} through ${endYear}. Click "Parse Game" to generate Excel output.`
+        );
 
       } catch (err) {
-
         resultsEl.innerHTML = '<div class="muted">No results.</div>';
         setStatus(`Error finding PDFs: ${err.message}`);
-
       } finally {
         runBtn.disabled = false;
       }
     }
 
+    /* ------------------------------------------------------------
+       App startup
+       ------------------------------------------------------------ */
 
-    /* Run discovery when button clicked */
+    /*
+      Wire up the main button and immediately load school options
+      when the page first opens.
+    */
     runBtn.addEventListener("click", runDiscovery);
-
-    /* Load schools automatically when page opens */
     loadSchools();
 
+    let currentHITLRows = [];
+    let currentHITLCols = [];
+    let currentFilename = "";
+    let hitlIndex = 0;
+    let hitlBatchIndex = 0;
+
+    function openHITL(rows, columns, filename) {
+        console.log("Opening HITL for:", filename);
+        currentHITLRows = rows;
+        currentFilename = filename;
+        
+        // Filter out metadata
+        currentHITLCols = columns.filter(c => 
+            !['Raw Text', 'HASH', 'play #', 'HUMAN VERIFIED?'].includes(c)
+        );
+        
+        // Resume Logic: Find first play not marked 'Yes'
+        hitlIndex = currentHITLRows.findIndex(r => r['HUMAN VERIFIED?'] !== 'Yes');
+        if (hitlIndex === -1) {
+            if(!confirm("All rows verified. Restart from the beginning?")) return;
+            hitlIndex = 0;
+        }
+
+        hitlBatchIndex = 0;
+        document.getElementById('hitl-modal').classList.add('active');
+        renderHITLRow();
+    }
+
+    function renderHITLRow() {
+        const row = currentHITLRows[hitlIndex];
+        const container = document.getElementById('hitl-fields');
+        const rawTextEl = document.getElementById('hitl-raw-text');
+        const progressEl = document.getElementById('hitl-progress');
+
+        // Calculate Batches
+        const totalCols = currentHITLCols.length;
+        const batchSize = Math.ceil(totalCols / 3);
+        const start = hitlBatchIndex * batchSize;
+        const end = Math.min(start + batchSize, totalCols);
+        const activeBatchCols = currentHITLCols.slice(start, end);
+
+        // Update UI Progress
+        const status = row['HUMAN VERIFIED?'] === 'Yes' ? '✅' : '❌';
+        progressEl.innerHTML = `Row ${hitlIndex + 1}/${currentHITLRows.length} ${status}<br><b>Batch ${hitlBatchIndex + 1}/3</b>`;
+        rawTextEl.textContent = row['Raw Text'] || "No raw text.";
+        
+        container.innerHTML = '';
+
+        // If this batch is empty (can happen if total features < 3), skip it
+        if (activeBatchCols.length === 0) {
+            console.log("Empty batch, auto-advancing...");
+            handleVerifyClick(); 
+            return;
+        }
+
+        activeBatchCols.forEach(col => {
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'hitl-row';
+            rowDiv.innerHTML = `
+                <div class="hitl-label">${col}</div>
+                <input class="hitl-input" value="${row[col] ?? ''}" data-col="${col}">
+            `;
+            container.appendChild(rowDiv);
+        });
+    }
+
+    // Logic for the Green Checkmark
+    async function handleVerifyClick() {
+        console.log(`Verifying Row ${hitlIndex}, Batch ${hitlBatchIndex}`);
+
+        // 1. Save data from current visible inputs
+        const inputs = document.querySelectorAll('.hitl-input');
+        inputs.forEach(input => {
+            currentHITLRows[hitlIndex][input.dataset.col] = input.value;
+        });
+
+        // 2. Advance Batch
+        hitlBatchIndex++;
+
+        // 3. If we finished Batch 3, move to next row
+        if (hitlBatchIndex >= 3) {
+            currentHITLRows[hitlIndex]['HUMAN VERIFIED?'] = 'Yes'; // Auto-verify
+            hitlBatchIndex = 0;
+            hitlIndex++;
+        }
+
+        // 4. Update UI or Finish
+        if (hitlIndex < currentHITLRows.length) {
+            renderHITLRow();
+        } else {
+            console.log("Final Row Reached. Saving...");
+            await finishHITL();
+        }
+    }
+
+    // Attach the listener once
+    document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('hitl-verify-btn');
+        if (btn) {
+            btn.addEventListener('click', handleVerifyClick);
+        }
+    });
+
+    async function finishHITL(silent = false) {
+        try {
+            const resp = await fetch("/api/update-excel", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    filename: currentFilename,
+                    rows: currentHITLRows
+                })
+            });
+            const result = await resp.json();
+            if (!silent && result.ok) {
+                alert("Success! Changes saved to Excel.");
+                document.getElementById('hitl-modal').classList.remove('active');
+            }
+        } catch (err) {
+            console.error("Save failed:", err);
+        }
+    }
+
+    // Exit logic
+    async function closeHITL() {
+        await finishHITL(true); // Auto-save on exit
+        document.getElementById('hitl-modal').classList.remove('active');
+    }
+
   </script>
+
+  <div id="hitl-modal" class="modal-overlay">
+    <div class="hitl-container">
+      <button class="close-modal" onclick="closeHITL()">✕ Exit Review</button>
+      <div id="hitl-progress" class="hitl-progress">Row 0 of 0</div>
+      
+      <div id="hitl-raw-text" class="hitl-raw-text">
+        </div>
+
+      <div class="hitl-edit-header">Click to edit</div>
+
+      <div id="hitl-fields" class="hitl-grid">
+        </div>
+
+      <button id="hitl-verify-btn" class="hitl-check-btn">✔</button>
+    </div>
+  </div>
 
 </body>
 </html>
