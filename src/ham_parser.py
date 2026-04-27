@@ -314,7 +314,7 @@ def determine_close_game(quarter, score_difference):
         return "close game"
     elif quarter == 3:
         if score_difference <= 32:
-            return "in range"
+            return "close game"
         else:
             return "blowout"
     elif quarter == 4:
@@ -358,6 +358,25 @@ def get_minutes_left(line):
         return int(match.group(1))
     
     return None
+
+#If defensive player is identified but no defensive play, default defensive play to tackle
+def fill_missing_tackles(all_plays):
+    """
+    Checks if 'DEFENDER' is present and 'DEFENSIVE PLAY TYPE' is missing.
+    If so, fills 'DEFENSIVE PLAY TYPE' with 'TACKLE'.
+    """
+    
+    # Define the conditions:
+    # 1. DEFENDER is not null (not NaN) and not an empty string
+    # 2. DEFENSIVE PLAY TYPE is null (NaN) or an empty string
+    
+    has_defender = all_plays['DEFENDER'].notna() & (all_plays['DEFENDER'] != "")
+    missing_play_type = all_plays['DEFENSIVE PLAY TYPE'].isna() | (all_plays['DEFENSIVE PLAY TYPE'] == "")
+
+    # Apply "TACKLE" only where both conditions are True
+    all_plays.loc[has_defender & missing_play_type, 'DEFENSIVE PLAY TYPE'] = 'TACKLE'
+    
+    return all_plays
 
 # slightly modified parser to return path for front end (CITE: ChatGPT 5.2)
 # var pdf_path: the path the to play-by-play pdf
@@ -532,6 +551,9 @@ def build_dataframe_from_pdf(pdf_path):
             # Conditional logic: Only record a defensive play type if a defender exists
             if defender != "":
                 all_plays[original_index]["DEFENSIVE PLAY TYPE"] = def_play_type
+                if def_play_type == "NONE" or def_play_type == "":
+                    all_plays[original_index]["DEFENSIVE PLAY TYPE"] = "TACKLE"
+                    
             else:
                 all_plays[original_index]["DEFENSIVE PLAY TYPE"] = ""
     else:
