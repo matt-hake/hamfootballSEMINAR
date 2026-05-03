@@ -21,3 +21,27 @@ hamilton_football_2025_pdfs/
 # OS
 #.DS_Store
 .env
+
+# PyInstaller output
+build/
+dist/
+*.spec
+
+# Python cache
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Virtual environment
+.venv/
+
+# Secrets
+.env
+
+# Runtime app files
+data/temp/
+data/exports/
+
+# OS files
+.DS_Store
+Thumbs.db

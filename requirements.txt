@@ -11,7 +11,9 @@ pandas
 openpyxl
 streamlit
 bs4
-requests
 groq
 xlsxwriter
 werkzeug
+python-dotenv
+pyyaml
+pyinstaller
