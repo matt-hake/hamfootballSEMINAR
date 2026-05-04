@@ -36,8 +36,7 @@ pyinstaller `
     --onedir `
     --name FootballParserApp `
     --paths "src" `
-    --paths "src/app" `
-    --hidden-import "api" `
+    --hidden-import "app.api" `
     --add-data "src;src" `
     --add-data "config;config" `
     --add-data "README_START_HERE.txt;." `
