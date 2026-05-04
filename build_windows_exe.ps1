@@ -35,10 +35,12 @@ Write-Host "Building FootballParserApp.exe..." -ForegroundColor Cyan
 pyinstaller `
     --onedir `
     --name FootballParserApp `
+    --paths "src" `
+    --hidden-import "app.api" `
     --add-data "src;src" `
     --add-data "config;config" `
-    --add-data ".env;." `
     --add-data "README_START_HERE.txt;." `
+    --add-data ".env.example;." `
     run_client_app.py
 
 Write-Host "Creating runtime data folders..." -ForegroundColor Cyan
