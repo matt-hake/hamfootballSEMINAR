@@ -1,32 +1,6 @@
-"""
-Client launcher for the football play-by-play parser.
-
-This file is meant to become the Windows .exe entry point.
-
-It assumes this repository structure:
-
-hamfootballSEMINAR/
-    config/
-        schools.csv
-        potential_errors.yaml
-    data/
-    src/
-        app/
-            api.py
-            templates/
-        errors.py
-        ham_parser.py
-        hamscrape.py
-        llm_engine.py
-        run_hamscrape.py
-    .env
-    requirements.txt
-
-CITE: CHATGPT 5.2
-"""
-
 from __future__ import annotations
 
+import importlib.util
 import sys
 import threading
 import webbrowser
@@ -38,40 +12,93 @@ PORT = 5000
 
 
 def get_base_dir() -> Path:
+    """
+    Find the folder containing bundled project files.
+
+    In normal development:
+        hamfootballSEMINAR/
+
+    In PyInstaller:
+        usually FootballParserApp/_internal/
+    """
+    possible_dirs = []
+
     if getattr(sys, "frozen", False):
-        return Path(sys.executable).resolve().parent
-    return Path(__file__).resolve().parent
+        exe_dir = Path(sys.executable).resolve().parent
+        possible_dirs.extend(
+            [
+                exe_dir,
+                exe_dir / "_internal",
+                Path(getattr(sys, "_MEIPASS", exe_dir)).resolve(),
+            ]
+        )
+    else:
+        possible_dirs.append(Path(__file__).resolve().parent)
+
+    for folder in possible_dirs:
+        if (folder / "src" / "app" / "api.py").exists():
+            return folder
+
+    raise RuntimeError(
+        "Could not find src/app/api.py. Checked:\n"
+        + "\n".join(str(folder) for folder in possible_dirs)
+    )
 
 
 BASE_DIR = get_base_dir()
 SRC_DIR = BASE_DIR / "src"
 APP_DIR = SRC_DIR / "app"
 
-# ============================================================
-# FIX IMPORT PATHS
-# ============================================================
-
-# Add these directories so Python can find your modules
-for path in [SRC_DIR, APP_DIR]:
+for path in [BASE_DIR, SRC_DIR, APP_DIR]:
     path_str = str(path)
     if path_str not in sys.path:
         sys.path.insert(0, path_str)
 
-# Now this works
-from api import app  # noqa: E402
+(BASE_DIR / "data").mkdir(exist_ok=True)
+(BASE_DIR / "data" / "temp").mkdir(parents=True, exist_ok=True)
+(BASE_DIR / "data" / "exports").mkdir(parents=True, exist_ok=True)
+
+
+def load_flask_app():
+    """
+    Load src/app/api.py directly from its file path.
+
+    This avoids the PyInstaller issue where `from api import app`
+    sometimes fails even when the file exists.
+    """
+    api_path = APP_DIR / "api.py"
+
+    spec = importlib.util.spec_from_file_location("api", api_path)
+
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Could not load api.py from {api_path}")
+
+    api_module = importlib.util.module_from_spec(spec)
+    sys.modules["api"] = api_module
+    spec.loader.exec_module(api_module)
+
+    return api_module.app
+
+
+app = load_flask_app()
 
 
 def open_browser() -> None:
-    """Open the local browser interface."""
     webbrowser.open(f"http://{HOST}:{PORT}")
 
 
 if __name__ == "__main__":
-    threading.Timer(1.5, open_browser).start()
+    try:
+        threading.Timer(1.5, open_browser).start()
 
-    app.run(
-        host=HOST,
-        port=PORT,
-        debug=False,
-        use_reloader=False,
-    )
+        app.run(
+            host=HOST,
+            port=PORT,
+            debug=False,
+            use_reloader=False,
+        )
+
+    except Exception as error:
+        print("\nThe app crashed with this error:")
+        print(error)
+        input("\nPress Enter to close...")
