@@ -34,28 +34,23 @@ def get_raw_lines(pdf_path):
 # Written by google gemini 3/30
 # set_odk_team() looks at the literal first page in the document and asks the LLM to find the two teams
 # return: Hamilton if playing, otherwise an arbitrarily chosen team
-def set_odk_team(pdf_path):
+# Replace set_odk_team with this:
+def get_game_teams(pdf_path):
     header_text = ""
     with pdfplumber.open(pdf_path) as pdf:
         if len(pdf.pages) > 0:
             text = pdf.pages[0].extract_text()
             if text:
-                # FIX: Slices the first 20 lines properly
                 header_text = "\n".join(text.split("\n")[:20])
 
     if header_text:
-        print("Asking LLM to identify teams from the Title Page...")
         teams = get_teams_from_title(header_text)
-        odk_team = teams[0] if teams[0] else "UNKNOWN"
-
-        for team in teams:
-            if team and ("HAM" in team.upper() or "HAMILTON" in team.upper()):
-                odk_team = team
-                break
-        return odk_team
-    else:
-        print("Error: Could not read the Title Page.")
-        return "Error: Could not read the Title Page."
+        # Just grab the first two teams the LLM returns
+        team1 = teams[0] if (teams and len(teams) > 0) else "UNKNOWN"
+        team2 = teams[1] if (teams and len(teams) > 1) else "UNKNOWN"
+        return team1, team2
+    
+    return "UNKNOWN", "UNKNOWN"
 
 
 # quarter_update() increments the quarter if certain phrases are found in the current line.
@@ -394,9 +389,10 @@ def build_dataframe_from_pdf(pdf_path):
     down_overflow = False
 
     raw_lines = get_raw_lines(pdf_path)
-    odk_team = set_odk_team(pdf_path)
+    odk_team, opponent_team = get_game_teams(pdf_path)
     score_difference = 0
     minutes_left = TIME_IN_QUARTER
+    current_score = "0-0"
 
     line_number = 0
     while line_number < len(raw_lines):
@@ -406,6 +402,7 @@ def build_dataframe_from_pdf(pdf_path):
         score_update = find_score(line)
         if score_update["is_score_line"]:
             score_difference = abs(score_update["score1"] - score_update["score2"])
+            current_score = f"{score_update['score1']}-{score_update['score2']}"
         
         current_time_check = get_minutes_left(line)
         if current_time_check is not None:
@@ -459,11 +456,20 @@ def build_dataframe_from_pdf(pdf_path):
         down = line[0]
         distance = update_distance(line)
 
+        if odk == "OFF":
+            off_team, def_team = odk_team, opponent_team
+        elif odk == "DEF":
+            off_team, def_team = opponent_team, odk_team
+        else:
+            off_team, def_team = "", ""
+
         all_plays.append(
             {
                 "HUMAN VERIFIED?": "No",
                 "PLAY #": play_count,
                 "ODK": odk,
+                "Live Score": current_score,
+                "Time Left": minutes_left,
                 "SERIES": series_count if odk in ["DEF", "OFF"] else "",
                 "SNAP #": "" if snap_count == 0 else snap_count,
                 "DOWN": int(down) if odk != "KO" else "",
