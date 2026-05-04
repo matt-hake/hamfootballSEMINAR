@@ -45,11 +45,31 @@ from errors import (
 )
 
 # Default year used only when the caller does not supply one explicitly.
-DEFAULT_YEAR = 2025 # TODO : change how this is implemented, have a way to track this for the user
+DEFAULT_YEAR = 2025  # TODO: improve handling (e.g., UI-controlled)
 
-# Path to the client-editable CSV config file.
-BASE_DIR = Path(__file__).resolve().parents[1]
-CONFIG_CSV = BASE_DIR / "config" / "schools.csv"
+from pathlib import Path
+
+# ============================================================
+# PATH SETUP (consistent with api.py)
+# ============================================================
+
+# This file lives in:
+#   src/hamscrape.py
+SRC_DIR = Path(__file__).resolve().parent
+
+# Project root:
+#   hamfootballSEMINAR/
+PROJECT_DIR = SRC_DIR.parent
+
+# Config paths
+CONFIG_DIR = PROJECT_DIR / "config"
+CONFIG_CSV = CONFIG_DIR / "schools.csv"
+
+# Optional: default output directory for downloaded PDFs
+DEFAULT_OUTPUT_DIR = PROJECT_DIR / "data" / "nescac_pdfs"
+DEFAULT_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+
 
 # Map month names/abbreviations to month numbers so we can parse both
 # "September 14, 2025" and similar textual date formats.

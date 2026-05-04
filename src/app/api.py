@@ -72,8 +72,10 @@ load_dotenv()
 
 # File layout assumptions:
 #
-# project/
+# hamfootballSEMINAR/
 #   config/
+#     schools.csv
+#     potential_errors.yaml
 #   data/
 #     temp/
 #     exports/
@@ -83,13 +85,16 @@ load_dotenv()
 #       templates/
 #       static/
 #
-# APP_DIR is the directory containing this file (api.py).
+# APP_DIR is the directory containing this file:
+#   src/app/
 APP_DIR = Path(__file__).resolve().parent
 
-# SRC_DIR is one level up from app/.
+# SRC_DIR is:
+#   src/
 SRC_DIR = APP_DIR.parent
 
-# PROJECT_DIR is one more level up from src/.
+# PROJECT_DIR is:
+#   hamfootballSEMINAR/
 PROJECT_DIR = SRC_DIR.parent
 
 # Project folders used by the scraper/parser pipeline.
@@ -105,8 +110,8 @@ STATIC_DIR = APP_DIR / "static"
 # CSV config containing the valid school definitions.
 DEFAULT_CSV_PATH = CONFIG_DIR / "schools.csv"
 
-# Ensure the directories used to store downloaded PDFs and generated
-# Excel files exist before the app starts handling requests.
+# Ensure runtime folders exist before the app starts.
+DATA_DIR.mkdir(exist_ok=True)
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
 EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
