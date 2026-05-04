@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
@@ -31,10 +31,11 @@ jobs:
           pyinstaller `
             --onedir `
             --name FootballParserApp `
+            --paths "src" `
+            --hidden-import "app.api" `
+            --hidden-import "uuid" `
             --add-data "src;src" `
             --add-data "config;config" `
-            --add-data "README_START_HERE.txt;." `
-            --add-data ".env.example;." `
             run_client_app.py
 
       - name: Create runtime folders
@@ -43,6 +44,21 @@ jobs:
           New-Item -ItemType Directory -Force -Path "dist\FootballParserApp\data" | Out-Null
           New-Item -ItemType Directory -Force -Path "dist\FootballParserApp\data\temp" | Out-Null
           New-Item -ItemType Directory -Force -Path "dist\FootballParserApp\data\exports" | Out-Null
+
+          New-Item -ItemType Directory -Force -Path "dist\FootballParserApp\_internal\data" | Out-Null
+          New-Item -ItemType Directory -Force -Path "dist\FootballParserApp\_internal\data\temp" | Out-Null
+          New-Item -ItemType Directory -Force -Path "dist\FootballParserApp\_internal\data\exports" | Out-Null
+
+      - name: Copy client-facing instruction files
+        shell: powershell
+        run: |
+          if (Test-Path "README_START_HERE.txt") {
+            Copy-Item "README_START_HERE.txt" "dist\FootballParserApp\README_START_HERE.txt" -Force
+          }
+
+          if (Test-Path ".env.example") {
+            Copy-Item ".env.example" "dist\FootballParserApp\.env.example" -Force
+          }
 
       - name: Upload packaged app
         uses: actions/upload-artifact@v4
