@@ -147,16 +147,12 @@ b. Select the school(s) you are interested in and click "find games", the scrape
 
 c. Scroll down, Under "Discovered Games", find the game(s) you are interested in and click "Parse Game" (this may take a few minutes)
 **WARNING: Do not try to parse multiple games at once!**
-<img width="1388" height="713" alt="Screenshot 2026-04-26 at 11 28 12 AM" src="https://github.com/user-attachments/assets/50ad90fe-0221-4df4-80a6-e7c2e231a11c" />
+<img width="1413" height="727" alt="Screenshot 2026-05-07 at 2 31 25 PM" src="https://github.com/user-attachments/assets/213c7032-7841-47a0-9351-2c21ea50cb45" />
 
+d. You can then review the spreadsheet in the browser as instructed below. 
+<img width="1438" height="810" alt="Screenshot 2026-05-07 at 2 34 39 PM" src="https://github.com/user-attachments/assets/5879bec4-4ab2-4512-b184-55aebb9b35eb" />
 
-d. You can then review the spreadsheet in the browser by clicking "HITL Review" (human in the loop review). 
-<img width="1421" height="711" alt="Screenshot 2026-04-26 at 11 33 35 AM" src="https://github.com/user-attachments/assets/841a60e1-aef1-4010-b045-e0ada76754be" />
-
-<img width="1430" height="726" alt="Screenshot 2026-04-26 at 11 35 45 AM" src="https://github.com/user-attachments/assets/1f2b29e2-2ac6-4b2b-ad2c-e57ee24ffbc3" />
-
-e. Once you've finished reviewing, exit review (as demonstrated in the picture above). You can then download the excel file by clicking "Download Excel".
-<img width="1426" height="768" alt="Screenshot 2026-04-26 at 11 48 03 AM" src="https://github.com/user-attachments/assets/d3f164e8-5712-4c85-b107-6729b77aac2c" />
-
+e. Once you've finished reviewing, you can then download the excel file by clicking "Download Excel".
+<img width="1434" height="771" alt="Screenshot 2026-05-07 at 2 41 19 PM" src="https://github.com/user-attachments/assets/0313344b-7394-461e-beb2-4125a1385c6e" />
 
 f. **Once you are finished click back into the terminal (in VSCode) and hit ctrl + c to close the vitrual environment**
