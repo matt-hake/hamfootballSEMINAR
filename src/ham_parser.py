@@ -263,18 +263,18 @@ def find_direction(line):
     return ""
 
 #written by Google Gemini
-def find_game_situation(quarter, snap_count, all_plays, time_remaining, score_diff):
+def find_game_situation(quarter, snap_count, all_plays, time_remaining, score_diff, drive_start_time=None):
     """
     quarter: 1, 2, 3, 4
     snap_count: int (1 is the start of a drive)
-    all_plays: list of dicts (to check previous play for turnovers)
-    time_remaining: int (minutes)
+    all_plays: list of dicts (to check previous play for turnovers and drive start times)
+    time_remaining: int or float (minutes)
     score_diff: int (Positive if leading, negative if trailing)
+    drive_start_time: optional float/int. If None, the function will calculate it.
     """
     situations = []
 
     # 1. Sudden change (drive starting off a turnover)
-    # Checking if all_plays has data to avoid an IndexError
     if all_plays and all_plays[-1].get("SERIES END") == "TURNOVER":
         situations.append("Sudden change")
 
@@ -282,15 +282,33 @@ def find_game_situation(quarter, snap_count, all_plays, time_remaining, score_di
     if snap_count == 1:
         situations.append("P&10")
 
+    # --- NEW: Drive Start Time Logic ---
+    # We must determine the time the drive started to satisfy the 1st half 2-Minute rule
+    if drive_start_time is None:
+        if snap_count == 1:
+            drive_start_time = time_remaining
+        else:
+            try:
+                # Look back 'snap_count - 1' plays to find the first play of this drive
+                start_play_idx = -(snap_count - 1)
+                
+                # NOTE: Replace "TIME_REMAINING" below with the exact key used in your dictionaries
+                start_play = all_plays[start_play_idx]
+                drive_start_time = start_play.get("Time Left", time_remaining)
+            except (IndexError, KeyError, TypeError):
+                # Fallback to current time if the historical play can't be found
+                drive_start_time = time_remaining
+
     # 3. 2 minute drill
-    # Rule A: End of 1st half, under 3 mins
-    if quarter == 2 and time_remaining < 3:
+    # Rule A: 2nd quarter, the possession STARTED with under 3 minutes left
+    if quarter == 2 and drive_start_time < 3:
         situations.append("2 minute drill")
-    # Rule B: 4th quarter, trailing, under 4 mins
+    # Rule B: 4th quarter, team possesses ball, trailing, currently under 4 minutes
     elif quarter == 4 and score_diff < 0 and time_remaining < 4:
         situations.append("2 minute drill")
 
-    # 4. 4 minute drill (Leading, 4th quarter, < 6 mins)
+    # 4. 4 minute drill 
+    # Rule: 4th quarter, team possesses ball, leading, currently under 6 minutes
     if quarter == 4 and score_diff > 0 and time_remaining < 6:
         situations.append("4 minute drill")
 
@@ -390,7 +408,8 @@ def build_dataframe_from_pdf(pdf_path):
 
     raw_lines = get_raw_lines(pdf_path)
     odk_team, opponent_team = get_game_teams(pdf_path)
-    score_difference = 0
+    team1_score = 0
+    team2_score = 0
     minutes_left = TIME_IN_QUARTER
     current_score = "0-0"
 
@@ -401,9 +420,10 @@ def build_dataframe_from_pdf(pdf_path):
 
         score_update = find_score(line)
         if score_update["is_score_line"]:
-            score_difference = abs(score_update["score1"] - score_update["score2"])
-            current_score = f"{score_update['score1']}-{score_update['score2']}"
-        
+            team1_score = score_update["score1"]
+            team2_score = score_update["score2"]
+            current_score = f"{team1_score}-{team2_score}"
+
         current_time_check = get_minutes_left(line)
         if current_time_check is not None:
             minutes_left = current_time_check
@@ -450,8 +470,29 @@ def build_dataframe_from_pdf(pdf_path):
         field_position = update_field_position(current_words, odk, odk_team)
         all_plays = update_gain(all_plays, field_position)
         series_end = update_series_end(all_plays, line, odk)
-        close_game = determine_close_game(quarter, score_difference)
-        game_situation = find_game_situation(quarter, snap_count, all_plays, minutes_left, score_difference)
+
+        # 1. Determine the signed score differential for the team WITH the ball
+        if odk == "OFF":
+            # The focus team has the ball
+            signed_score_diff = team1_score - team2_score 
+        elif odk == "DEF":
+            # The opponent has the ball
+            signed_score_diff = team2_score - team1_score 
+        else:
+            # Special teams or other
+            signed_score_diff = 0
+
+        # 2. Call your functions using the new logic
+        close_game = determine_close_game(quarter, abs(signed_score_diff)) # Pass abs() if determine_close_game still needs a positive number
+        
+        game_situation = find_game_situation(
+            quarter=quarter, 
+            snap_count=snap_count, 
+            all_plays=all_plays, 
+            time_remaining=minutes_left, 
+            score_diff=signed_score_diff, 
+            drive_start_time=None
+        )
 
         down = line[0]
         distance = update_distance(line)
