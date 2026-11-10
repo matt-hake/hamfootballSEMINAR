@@ -140,19 +140,19 @@ d. Look at the line above the yellow text, there will be a line that says someth
 ## 3. Navigating the UI
 
 a. At the top of the page, select the years you would like scrape.
-<img width="1438" height="732" alt="Screenshot 2026-04-25 at 9 57 37 AM" src="https://github.com/user-attachments/assets/b164c77f-061a-4a7e-b540-5ee0dd767723" />
+<img width="1440" height="521" alt="Screenshot 2026-11-10 at 12 31 28 PM" src="https://github.com/user-attachments/assets/7321f2eb-57cc-4ff8-a34d-eead6f0524bd" />
 
 b. Select the school(s) you are interested in and click "find games", the scraper will now find all requested games (this may take 10-20 seconds)
-<img width="1438" height="732" alt="Screenshot 2026-04-25 at 9 57 37 AM" src="https://github.com/user-attachments/assets/de511a8f-10ec-4af1-9dcc-b63512122259" />
+<img width="1432" height="518" alt="Screenshot 2026-11-10 at 12 33 37 PM" src="https://github.com/user-attachments/assets/67d75ee6-1a38-4e24-9b8a-9cd6f6621838" />
 
 c. Scroll down, Under "Discovered Games", find the game(s) you are interested in and click "Parse Game" (this may take a few minutes)
 **WARNING: Do not try to parse multiple games at once!**
-<img width="1413" height="727" alt="Screenshot 2026-05-07 at 2 31 25 PM" src="https://github.com/user-attachments/assets/213c7032-7841-47a0-9351-2c21ea50cb45" />
+<img width="1413" height="727" alt="Screenshot 2026-05-07 at 2 31 25 PM" src="https://github.com/user-attachments/assets/1aa7a283-3218-459e-8489-2b6f01655ae6" />
 
 d. You can then review the spreadsheet in the browser as instructed below. 
-<img width="1438" height="810" alt="Screenshot 2026-05-07 at 2 34 39 PM" src="https://github.com/user-attachments/assets/5879bec4-4ab2-4512-b184-55aebb9b35eb" />
+<img width="1438" height="810" alt="Screenshot 2026-05-07 at 2 34 39 PM" src="https://github.com/user-attachments/assets/e6bfba23-2369-4101-9b21-7ff33ecad166" />
 
 e. Once you've finished reviewing, you can then download the excel file by clicking "Download Excel".
-<img width="1434" height="771" alt="Screenshot 2026-05-07 at 2 41 19 PM" src="https://github.com/user-attachments/assets/0313344b-7394-461e-beb2-4125a1385c6e" />
+<img width="1434" height="771" alt="Screenshot 2026-05-07 at 2 41 19 PM" src="https://github.com/user-attachments/assets/5e611ba5-c125-4758-a186-b8bf77e26b9e" />
 
 f. **Once you are finished click back into the terminal (in VSCode) and hit ctrl + c to close the vitrual environment**
